@@ -1,4 +1,4 @@
-# own-group-ideas
+# group_idea_research
 
 Research memo for the SIX "Company Brain" prototype.
 
