@@ -596,3 +596,147 @@ It is a governed memory system that:
 - answers only within access policy,
 - tracks freshness and deprecation,
 - and converts missing knowledge into assignments for the right role.
+
+## 12. Easy-access website and QR delivery
+
+The demo will only work if it is frictionless on a phone. The website itself is part of the product, not just a shell around the product.
+
+### 12.1 Recommended delivery shape
+
+The cleanest implementation is:
+
+- a single public production URL on a custom domain,
+- a mobile-first single-page app hosted on AWS Amplify Hosting,
+- AWS Lambda + API Gateway for query, source inspection, and gap creation endpoints,
+- a manifest-enabled PWA shell so the page can be opened and installed easily on phones,
+- and one QR code that always points to the production URL root.
+
+Why this shape matters:
+
+- AWS Amplify Hosting provides a continuous-delivery path for the front end and supports custom domains.
+- API Gateway + Lambda gives us a clean, managed API layer without running our own server.
+- Route 53 gives us stable DNS for the public demo URL and QR target.
+- Preview deployments are useful for internal iteration, but the QR code for the demo should point to the stable custom domain, not a random preview address.
+- The same public URL should handle query, check, and retrieve so the audience experiences one product, not multiple tools.
+
+Primary sources:
+
+- [AWS Amplify Hosting](https://docs.aws.amazon.com/amplify/)
+- [AWS Amplify custom domain support](https://docs.aws.amazon.com/amplify/latest/userguide/custom-domains.html)
+- [AWS Lambda](https://docs.aws.amazon.com/lambda/)
+- [AWS API Gateway serverless starter](https://docs.aws.amazon.com/serverless/latest/devguide/starter-apigw.html)
+- [Amazon Route 53](https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/Welcome.html)
+
+### 12.2 Exact user journey
+
+The QR code should open the landing page directly, with no login wall and no extra click before first interaction.
+
+Recommended flow:
+
+1. User scans QR code.
+2. The browser opens the production homepage.
+3. The homepage shows a clear query box, sample prompts, and role selector.
+4. The user can immediately:
+   - ask a question,
+   - inspect the source trail,
+   - or retrieve a document or answer card.
+5. If the user wants to continue on the device, the page can be added to the home screen as a PWA.
+
+### 12.3 QR code implementation
+
+Generate the QR code from the production URL, not from a dev host.
+
+Use a standard QR generator that can output SVG and PNG. The `qrcode` package is a good fit because it supports SVG output and lets you set the error correction level. Use high error correction so the code still scans well when displayed on a projector or screen.
+
+Implementation details:
+
+- QR content: the canonical production homepage URL.
+- Output 1: SVG for slides and crisp display.
+- Output 2: PNG for fallback use in images or handouts.
+- Error correction: `H`.
+- Layout: a visible human-readable short URL under the QR code as a fallback.
+- Size: render large enough to scan from a room display.
+
+Primary source:
+
+- [qrcode npm package](https://www.npmjs.com/package/qrcode)
+
+### 12.4 Accessibility requirements for the website
+
+This needs to work on phones, tablets, and keyboard-driven desktop browsers.
+
+Minimum requirements:
+
+- visible focus for every interactive element,
+- explicit labels for all form fields,
+- native buttons and links where possible,
+- large tap targets,
+- text alternatives for icons and non-text controls,
+- high-contrast text on the answer cards,
+- responsive layout that collapses cleanly to one column on mobile,
+- no color-only meaning for freshness or permission state,
+- and no login or installation requirement before first use.
+
+Primary sources:
+
+- [W3C accessibility principles](https://www.w3.org/WAI/fundamentals/accessibility-principles/)
+- [W3C mobile accessibility](https://www.w3.org/WAI/standards-guidelines/mobile/)
+- [W3C labeling controls](https://www.w3.org/WAI/tutorials/forms/labels/)
+- [W3C keyboard compatibility](https://www.w3.org/WAI/perspective-videos/keyboard/)
+- [W3C visible keyboard focus](https://www.w3.org/WAI/test-evaluate/easy-checks/keyboard-focus/)
+
+### 12.5 PWA layer
+
+The PWA layer is optional for the demo but worth implementing because it reduces friction on mobile.
+
+If it is added, the manifest should include:
+
+- `name`
+- `short_name`
+- `start_url`
+- `display: standalone`
+- icons at 192x192 and 512x512
+
+Primary sources:
+
+- [web.dev add a web app manifest](https://web.dev/add-manifest/)
+- [web.dev web app manifest](https://web.dev/learn/pwa/web-app-manifest)
+- [web.dev PWA installation](https://web.dev/learn/pwa/installation)
+
+### 12.6 Minimal API surface
+
+To keep the website simple, the front end should talk to a small API surface on the same domain:
+
+- `GET /api/query?q=...&role=...`
+  - returns the grounded answer, citations, freshness, and role ownership.
+- `GET /api/source/:id`
+  - returns provenance, version, and the underlying source snippet or record.
+- `POST /api/gap`
+  - creates a knowledge-gap item and routes it to the responsible role.
+- `GET /api/roles`
+  - returns the available role groups for the demo selector.
+
+Why this matters:
+
+- it keeps query, check, and retrieve on one origin,
+- it keeps the demo easy to scan and easy to explain,
+- and it prevents the UI from turning into a pile of one-off calls.
+
+### 12.7 Backend recommendation
+
+For this demo, the primary backend should be AWS Lambda + API Gateway.
+
+Recommended choice:
+
+- Use AWS Lambda with API Gateway for the backend endpoints.
+
+Why:
+
+- a QR-scanned demo needs a stable public HTTPS endpoint,
+- AWS managed services remove most of the uptime, networking, and reboot risk,
+- the demo stays easier to explain when the entire path is AWS-managed.
+
+Primary sources:
+
+- [AWS Lambda](https://docs.aws.amazon.com/lambda/)
+- [AWS API Gateway serverless starter](https://docs.aws.amazon.com/serverless/latest/devguide/starter-apigw.html)
