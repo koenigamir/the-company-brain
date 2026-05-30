@@ -76,11 +76,20 @@ COMPANY_BRAIN_API_URL=http://x.x.x.x:8000
 Then:
 
 ```bash
+nvm use
 npm install
 npm run dev
 ```
 
 The Next.js app calls its own API routes under `/api/company-brain/*`. Those server routes proxy to the AWS backend, so the backend URL remains a server-side env var.
+
+Use Node 22 LTS for local frontend work and Vercel parity. If `npm run typecheck` or `npm run build` hangs locally, remove generated artifacts and reinstall under Node 22:
+
+```bash
+rm -rf node_modules .next tsconfig.tsbuildinfo
+nvm use
+npm install
+```
 
 For Vercel, set project root to `frontend-next` and configure the `COMPANY_BRAIN_API_URL` environment variable in Vercel. Do not use `NEXT_PUBLIC_` for the backend URL unless the backend is intentionally public and stable.
 

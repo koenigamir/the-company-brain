@@ -235,7 +235,7 @@ Agents should treat these as part of the real-world problem context even when th
 - Required secret for answer synthesis is `ANTHROPIC_API_KEY`.
 - AWS deployment target for this branch is ECS Fargate with EFS-mounted GraphRAG artifacts, as documented in `DEPLOY_AWS.md`.
 - AWS backend operations are wrapped by `./scripts/aws_backend.sh`; keep desired count at `0` when nobody is testing.
-- Next.js/Vercel migration work starts in `frontend-next/`; set Vercel project root to `frontend-next` and configure `COMPANY_BRAIN_API_URL` as a server-side environment variable.
+- Next.js/Vercel migration work starts in `frontend-next/`; use Node 22 via `frontend-next/.nvmrc`, set Vercel project root to `frontend-next`, and configure `COMPANY_BRAIN_API_URL` as a server-side environment variable.
 
 ## What To Update When Facts Change
 
