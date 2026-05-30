@@ -195,6 +195,56 @@ def load_graph(path: str = GRAPH_PATH):
 # ---------------------------------------------------------------------------
 # Query-time traversal
 # ---------------------------------------------------------------------------
+def merge_document(
+    graph: dict,
+    source_file: str,
+    role_owner: str,
+    chunk_texts: list,
+) -> dict:
+    """Add or replace one document in an existing graph (incremental ingest)."""
+    if graph is None:
+        graph = {"documents": {}, "entities": {}, "roles": {}}
+
+    # Remove stale references if this filename was indexed before.
+    if source_file in graph.get("documents", {}):
+        old_role = graph["documents"][source_file].get("role_owner")
+        old_entities = graph["documents"][source_file].get("entities", [])
+        if old_role and old_role in graph.get("roles", {}):
+            docs = graph["roles"][old_role].get("documents", [])
+            graph["roles"][old_role]["documents"] = [d for d in docs if d != source_file]
+        for ent in old_entities:
+            if ent in graph.get("entities", {}):
+                docs = graph["entities"][ent].get("documents", [])
+                graph["entities"][ent]["documents"] = [d for d in docs if d != source_file]
+
+    scan_text = source_file + " " + " ".join(chunk_texts)
+    ents = detect_entities(scan_text)
+
+    graph.setdefault("documents", {})[source_file] = {
+        "role_owner": role_owner,
+        "entities": ents,
+    }
+
+    graph.setdefault("roles", {})
+    if role_owner not in graph["roles"]:
+        graph["roles"][role_owner] = {"documents": []}
+    if source_file not in graph["roles"][role_owner]["documents"]:
+        graph["roles"][role_owner]["documents"].append(source_file)
+
+    graph.setdefault("entities", {})
+    for e in ents:
+        if e not in graph["entities"]:
+            graph["entities"][e] = {"type": ENTITIES[e]["type"], "documents": []}
+        if source_file not in graph["entities"][e]["documents"]:
+            graph["entities"][e]["documents"].append(source_file)
+
+    # Drop entity nodes that no longer have any documents.
+    graph["entities"] = {
+        k: v for k, v in graph["entities"].items() if v.get("documents")
+    }
+    return graph
+
+
 def documents_for_entities(graph: dict, entities) -> list:
     """Union of source files linked to any of the given entities."""
     if not graph:

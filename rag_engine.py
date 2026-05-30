@@ -1,4 +1,5 @@
-from typing import List
+from collections import Counter
+from typing import List, Optional
 from dotenv import load_dotenv
 from pydantic import BaseModel, Field
 
@@ -8,13 +9,31 @@ from langchain_chroma import Chroma
 from langchain_core.prompts import ChatPromptTemplate
 
 import graph_engine
+import knowledge_ops
 
 load_dotenv()
 
-CHROMA_DIR = "chroma_db"
-COLLECTION_NAME = "company_brain"
-EMBED_MODEL = "sentence-transformers/all-MiniLM-L6-v2"
+CHROMA_DIR = knowledge_ops.CHROMA_DIR
+COLLECTION_NAME = knowledge_ops.COLLECTION_NAME
+EMBED_MODEL = knowledge_ops.EMBED_MODEL
 LLM_MODEL = "claude-sonnet-4-6"
+
+VALID_ROLES = knowledge_ops.ROLE_OWNERS
+DEFAULT_ROLE = "Master Data Ops"
+
+# Map graph entities to owning teams (used as routing signal for gaps).
+ENTITY_TO_ROLE = {
+    "SFDR": "ESG Compliance",
+    "EU Taxonomy / ESG": "ESG Compliance",
+    "EET Template": "ESG Compliance",
+    "MiFID II": "Master Data Ops",
+    "MiFIR": "Master Data Ops",
+    "EMT Template": "Master Data Ops",
+    "Reference Data": "Master Data Ops",
+    "Product Coverage": "Master Data Ops",
+    "FATCA": "Tax Team",
+    "Tax Reporting": "Tax Team",
+}
 
 
 class WikiPage(BaseModel):
@@ -33,6 +52,18 @@ class WikiPage(BaseModel):
     )
 
 
+class GapRouting(BaseModel):
+    routed_to: str = Field(
+        description="One of: ESG Compliance, Master Data Ops, Tax Team."
+    )
+    reason: str = Field(
+        description="One sentence explaining why this team owns the gap."
+    )
+    routing_confidence: str = Field(
+        description="High, Medium, or Low confidence in this routing decision."
+    )
+
+
 SYSTEM_PROMPT = """You are an objective compliance knowledge-base synthesizer \
 for a financial regulatory-data company. Produce a single canonical wiki page \
 answering the user's question.
@@ -47,8 +78,28 @@ Strict rules:
 - 'role_owner' must come from the most relevant chunk's metadata.
 """
 
+GAP_ROUTING_PROMPT = """You route unanswered knowledge gaps to the responsible team \
+at a financial regulatory-data company.
+
+Teams and domains:
+- ESG Compliance: SFDR, ESG, EU taxonomy, EET templates, sustainability disclosures
+- Master Data Ops: MiFID, MiFIR, reference data, master data, EMT templates, instrument attributes, product coverage
+- Tax Team: FATCA, tax reporting, withholding, tax navigator
+
+The corpus did NOT contain a verified answer. Choose the ONE team most likely to \
+own the missing knowledge.
+
+Rules:
+1. Prefer topics and entities in the QUESTION over irrelevant retrieved chunks.
+2. Use chunk role_owner counts as a secondary signal when the question is domain-specific.
+3. If the question is clearly unrelated to all regulatory domains (HR, office policy, IT, general admin),
+   route to Master Data Ops as default intake with routing_confidence "Low".
+4. routed_to must be exactly one of: ESG Compliance, Master Data Ops, Tax Team.
+"""
+
 _llm = ChatAnthropic(model=LLM_MODEL, temperature=0, max_tokens=3000)
 _structured_llm = _llm.with_structured_output(WikiPage)
+_gap_llm = _llm.with_structured_output(GapRouting)
 
 _prompt = ChatPromptTemplate.from_messages(
     [
@@ -57,14 +108,34 @@ _prompt = ChatPromptTemplate.from_messages(
     ]
 )
 
+_gap_prompt = ChatPromptTemplate.from_messages(
+    [
+        ("system", GAP_ROUTING_PROMPT),
+        (
+            "human",
+            "Question:\n{question}\n\n"
+            "Entities detected in question: {entities_detected}\n"
+            "Suggested role from question entities: {entity_suggested_role}\n"
+            "Chunk role_owner counts: {chunk_role_counts}\n"
+            "Most common chunk owner: {max_chunk_role}\n\n"
+            "Retrieved chunks (may be irrelevant to the question):\n{context}",
+        ),
+    ]
+)
+
 
 _store = None
 _graph = None
 
 
+def reset_caches():
+    """Call after incremental ingest so the next query sees fresh data."""
+    global _store, _graph
+    _store = None
+    _graph = None
+
+
 def _get_store():
-    """Lazily build and cache the Chroma store (avoids reloading the embedding
-    model on every query)."""
     global _store
     if _store is None:
         embeddings = HuggingFaceEmbeddings(model_name=EMBED_MODEL)
@@ -83,8 +154,21 @@ def _get_graph():
     return _graph
 
 
+def add_file_to_brain(
+    file_bytes: bytes,
+    filename: str,
+    role_owner: Optional[str] = None,
+) -> dict:
+    """Ingest an uploaded file into Chroma + graph; invalidate query caches."""
+    result = knowledge_ops.add_file_to_brain(
+        file_bytes, filename, role_owner=role_owner
+    )
+    if result.get("ok"):
+        reset_caches()
+    return result
+
+
 def _dedupe(docs, limit):
-    """Deduplicate by (source_file, content prefix), preserving order."""
     seen = set()
     out = []
     for d in docs:
@@ -98,16 +182,60 @@ def _dedupe(docs, limit):
     return out
 
 
-def hybrid_retrieve(question, k_vector=5, k_graph=6, max_context=10):
-    """
-    GraphRAG (Tier 1) retrieval:
-      1. Vector search for the most semantically similar chunks (seed).
-      2. Detect entities in the question and expand one hop via the graph.
-      3. Pull the most relevant chunks from graph-linked documents.
-      4. Merge + dedupe so the LLM sees cross-document context.
+def _role_counts_from_entities(entities: list) -> Counter:
+    return Counter(ENTITY_TO_ROLE.get(e, DEFAULT_ROLE) for e in entities)
 
-    Returns (context_docs, debug) where debug describes the graph path used.
-    """
+
+def _suggest_role_from_signals(question: str, docs) -> dict:
+    """Deterministic routing hints passed into the structured gap router."""
+    entities = graph_engine.detect_entities(question)
+    entity_counts = _role_counts_from_entities(entities)
+    chunk_counts = Counter(d.metadata.get("role_owner", DEFAULT_ROLE) for d in docs)
+
+    entity_suggested = (
+        entity_counts.most_common(1)[0][0] if entity_counts else "none"
+    )
+    max_chunk_role = chunk_counts.most_common(1)[0][0] if chunk_counts else "none"
+
+    return {
+        "entities_detected": entities,
+        "entity_role_counts": dict(entity_counts),
+        "entity_suggested_role": entity_suggested,
+        "chunk_role_counts": dict(chunk_counts),
+        "max_chunk_role": max_chunk_role,
+    }
+
+
+def route_gap(question: str, docs, graph_debug: dict) -> dict:
+    """Structured gap router: question + retrieved docs -> owning team."""
+    signals = _suggest_role_from_signals(question, docs)
+    context = _format_context(docs[:5])
+
+    routing: GapRouting = (_gap_prompt | _gap_llm).invoke(
+        {
+            "question": question,
+            "context": context,
+            "entities_detected": signals["entities_detected"],
+            "entity_suggested_role": signals["entity_suggested_role"],
+            "chunk_role_counts": signals["chunk_role_counts"],
+            "max_chunk_role": signals["max_chunk_role"],
+        }
+    )
+
+    out = routing.model_dump()
+    if out["routed_to"] not in VALID_ROLES:
+        out["routed_to"] = signals["entity_suggested_role"] if signals["entity_role_counts"] else (
+            signals["max_chunk_role"] if signals["chunk_role_counts"] else DEFAULT_ROLE
+        )
+        if out["routed_to"] not in VALID_ROLES:
+            out["routed_to"] = DEFAULT_ROLE
+
+    out["signals"] = signals
+    out["graph_entities"] = graph_debug.get("entities_detected", [])
+    return out
+
+
+def hybrid_retrieve(question, k_vector=5, k_graph=6, max_context=10):
     store = _get_store()
     graph = _get_graph()
 
@@ -118,8 +246,6 @@ def hybrid_retrieve(question, k_vector=5, k_graph=6, max_context=10):
     expanded = graph_engine.expand_entities(detected)
     candidate_files = graph_engine.documents_for_entities(graph, expanded)
 
-    # Cross-context is only useful when the graph surfaces RELATED documents the
-    # vector seed did not already find. Restrict the graph search to those.
     new_files = [f for f in candidate_files if f not in seed_files]
 
     graph_hits = []
@@ -158,18 +284,19 @@ def _format_context(docs) -> str:
 
 
 def query_brain(question: str) -> dict:
-    """Retrieve, synthesize, and return a structured wiki page + raw metadata."""
     docs, graph_debug = hybrid_retrieve(question)
 
     if not docs:
+        gap = route_gap(question, [], graph_debug)
         return {
             "title": "No Results",
             "summary": "No indexed knowledge was found for this query.",
             "confidence": "Low",
             "sources": [],
-            "role_owner": "Master Data Ops",
+            "role_owner": gap["routed_to"],
             "last_updated_dates": [],
             "graph": graph_debug,
+            "gap_routing": gap,
         }
 
     context = _format_context(docs)
@@ -184,6 +311,12 @@ def query_brain(question: str) -> dict:
     out = result.model_dump()
     out["last_updated_dates"] = last_updated_dates
     if not out.get("role_owner"):
-        out["role_owner"] = docs[0].metadata.get("role_owner", "Master Data Ops")
+        out["role_owner"] = docs[0].metadata.get("role_owner", DEFAULT_ROLE)
     out["graph"] = graph_debug
+
+    if out.get("confidence") == "Low":
+        gap = route_gap(question, docs, graph_debug)
+        out["gap_routing"] = gap
+        out["role_owner"] = gap["routed_to"]
+
     return out

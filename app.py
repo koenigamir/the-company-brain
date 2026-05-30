@@ -1,11 +1,11 @@
 import streamlit as st
-from rag_engine import query_brain
+from rag_engine import query_brain, add_file_to_brain
+import knowledge_ops
 
 st.set_page_config(page_title="Company Brain", page_icon="brain", layout="wide")
 
 
 def render_graph_panel(graph: dict):
-    """Show the GraphRAG reasoning path: entities, relationships, linked docs."""
     if not graph:
         return
     detected = graph.get("entities_detected", [])
@@ -29,13 +29,56 @@ def render_graph_panel(graph: dict):
         for f in added:
             st.markdown(f"    - {f}")
 
-# ---------- Sidebar: fake RBAC ----------
+
+def render_gap_routing(gap: dict):
+    if not gap:
+        return
+    st.markdown(f"**Routed to:** `{gap.get('routed_to', 'Master Data Ops')}`")
+    st.markdown(f"**Reason:** {gap.get('reason', '')}")
+    st.caption(f"Routing confidence: {gap.get('routing_confidence', 'Low')}")
+    signals = gap.get("signals") or {}
+    if signals.get("entity_role_counts"):
+        st.caption(f"Question entity signals: {signals['entity_role_counts']}")
+    if signals.get("chunk_role_counts"):
+        st.caption(f"Retrieved chunk owners: {signals['chunk_role_counts']}")
+
+
+# ---------- Sidebar ----------
 st.sidebar.title("Company Brain")
 role = st.sidebar.selectbox(
     "Simulate Role:",
     ["Standard Employee", "ESG Compliance Officer"],
 )
 st.sidebar.caption(f"Signed in as: **{role}**")
+st.sidebar.divider()
+
+# ---------- Add knowledge (incremental ingest) ----------
+st.sidebar.subheader("Add Knowledge")
+uploaded = st.sidebar.file_uploader(
+    "Upload a document",
+    type=["pdf", "docx", "xlsx", "xlsm", "txt"],
+    help="File is saved to data/, chunked, embedded into Chroma, and linked in the graph.",
+)
+upload_role = st.sidebar.selectbox(
+    "Assign owner (optional)",
+    ["Auto-detect from filename"] + knowledge_ops.ROLE_OWNERS,
+)
+
+if uploaded is not None:
+    if st.sidebar.button("Ingest into Company Brain", type="primary"):
+        with st.spinner(f"Ingesting {uploaded.name}..."):
+            owner = None if upload_role == "Auto-detect from filename" else upload_role
+            result = add_file_to_brain(uploaded.getvalue(), uploaded.name, role_owner=owner)
+        if result.get("ok"):
+            st.sidebar.success(
+                f"Added **{result['chunks']}** chunks from `{result['filename']}` "
+                f"(owner: {result['role_owner']})"
+            )
+            if result.get("entities"):
+                st.sidebar.caption(f"Graph entities: {', '.join(result['entities'])}")
+        else:
+            st.sidebar.error(result.get("error", "Ingest failed."))
+
 st.sidebar.divider()
 
 # ---------- Main search ----------
@@ -53,7 +96,6 @@ if query:
 
     confidence = result.get("confidence", "Low")
 
-    # ---------- Path A: trusted answer ----------
     if confidence in ("High", "Medium"):
         st.header(result["title"])
 
@@ -80,10 +122,13 @@ if query:
         if graph.get("used_graph"):
             st.sidebar.success("GraphRAG: cross-document context used")
 
-    # ---------- Path B: knowledge gap ----------
     else:
         st.error("Insufficient verified knowledge to generate a canonical answer.")
-        gap_owner = result.get("role_owner", "Master Data Ops")
+        gap = result.get("gap_routing") or {}
+        gap_owner = gap.get("routed_to") or result.get("role_owner", "Master Data Ops")
+
+        with st.expander("Gap routing decision", expanded=True):
+            render_gap_routing(gap)
 
         if st.button("Route Knowledge Gap to Subject Matter Expert"):
             st.success(
@@ -94,14 +139,21 @@ if query:
         with st.expander("Why this was flagged as a gap"):
             render_graph_panel(result.get("graph"))
 
-        # ---------- Bonus: SME view for ESG officer ----------
         if role == "ESG Compliance Officer":
             st.divider()
             st.subheader("SME View: Draft a response to fill this knowledge gap")
-            st.text_area(
+            sme_draft = st.text_area(
                 "Expert response",
-                placeholder="As the subject-matter expert, draft the canonical "
-                "answer that should be added to the company brain...",
+                placeholder="Draft the canonical answer. You can also upload a document "
+                "via the sidebar to add it to the knowledge base.",
                 height=180,
+                key="sme_draft",
             )
-            st.button("Submit Expert Answer")
+            if st.button("Submit Expert Answer"):
+                if sme_draft.strip():
+                    st.info(
+                        "Draft saved for demo. To persist, upload a document via "
+                        "**Add Knowledge** in the sidebar, or paste content into a .txt/.docx file."
+                    )
+                else:
+                    st.warning("Please enter a draft response first.")
