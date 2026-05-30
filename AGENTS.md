@@ -29,6 +29,14 @@ Use this structure for new entries:
 
 ## Current Log
 
+### 2026-05-30 - AWS Backend Linked
+
+- Context: The user provided IAM access codes to link the project to AWS for the backend.
+- Actions: Created a `.env` file in the project root with the provided AWS credentials and set the default region to `eu-central-1`.
+- Changes made: `.env` file added.
+- Risks / open questions: The `aws` CLI seems to have a broken installation in the anaconda environment. Credentials are currently stored in `.env` for development.
+- Next agent: Start implementing the ingestion pipeline using these credentials (e.g., S3 upload, Bedrock integration).
+
 ### 2026-05-30 - README / AGENTS Role Split
 
 - Context: The workspace documentation structure was redesigned so new agents have one canonical first-read entry point.
