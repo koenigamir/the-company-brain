@@ -1,0 +1,20 @@
+
+--- Query: What is the Regulatory Navigator ---
+Retrieved 5 documents.
+LLM Result: {'title': 'Regulatory Navigator', 'summary': 'Regulatory Navigator is a tool designed to help financial institutions investigate the DNA of financial assets to meet regulatory requirements and make a difference for their business. It covers various aspects such as investor protection, regulatory reporting, crypto regulations, risk analysis, suitability assessment, trade surveillance, sanctions monitoring, and ESG (Environmental, Social, and Governance) compliance.', 'confidence': 'High', 'sources': ['Confidential_SIX_master-data-openining-and-mutations-facsheet.pdf'], 'role_owner': 'Master Data Ops'}
+
+--- Query: what is miFID 2 ---
+Retrieved 5 documents.
+LLM Result: {'title': 'What is MiFID 2', 'summary': 'The information regarding MiFID 2 is not available in the provided context chunks.', 'confidence': 'Low', 'sources': ['EU_MIFID_Template_20251217 FinDatEx - EMT V4.3 (1).xlsx'], 'role_owner': 'Master Data Ops'}
+
+--- Query: what is MiFID 2 ---
+Retrieved 5 documents.
+LLM Result: {'title': 'MiFID II', 'summary': 'MiFID II, or the Markets in Financial Instruments Directive II, is a European Union directive that regulates financial markets and aims to increase transparency, investor protection, and market integrity. It was implemented on February 8, 2022, as indicated in the context.', 'confidence': 'High', 'sources': ['EU_MIFID_Template_20251217 FinDatEx - EMT V4.3 (1).xlsx'], 'role_owner': 'Master Data Ops'}
+
+--- Query: test query ---
+Retrieved 5 documents.
+LLM Result: {'title': 'Test Query', 'summary': 'The information regarding the test query is not available in the provided context.', 'confidence': 'Low', 'sources': ['EU_ESG_Template_20260410- EET V1.1.3_Editorial update (1) (1).xlsx', 'US_six-factsheet-fatca-en.pdf'], 'role_owner': 'ESG Compliance'}
+
+--- Query: What is the EMT template and how does it support MiFID II? ---
+Retrieved 5 documents.
+LLM Result: {'title': 'EMT Template and MiFID II', 'summary': 'The EMT (European MiFID Template) is a standardized template used to report financial instrument information in compliance with MiFID II. It includes mandatory data points such as EMT version, producer name, producer LEI, producer email, file generation date and time, and data reporting targets. The EMT supports MiFID II by providing a structured format for reporting that ensures clear and understandable information about the product’s risks, costs, and potential returns, facilitating compliance and integration within financial infrastructures.', 'confidence': 'High', 'sources': ['EU_MIFID_Template_20251217 FinDatEx - EMT V4.3 (1) (1).xlsx'], 'role_owner': 'Master Data Ops'}

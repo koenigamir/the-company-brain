@@ -83,8 +83,14 @@ def _format_context(docs) -> str:
 
 def query_brain(question: str) -> dict:
     """Retrieve, synthesize, and return a structured wiki page + raw metadata."""
+    with open("debug_log.txt", "a") as f:
+        f.write(f"\n--- Query: {question} ---\n")
+    
     retriever = _get_retriever()
     docs = retriever.invoke(question)
+
+    with open("debug_log.txt", "a") as f:
+        f.write(f"Retrieved {len(docs)} documents.\n")
 
     if not docs:
         return {
@@ -100,6 +106,9 @@ def query_brain(question: str) -> dict:
     result: WikiPage = (_prompt | _structured_llm).invoke(
         {"question": question, "context": context}
     )
+
+    with open("debug_log.txt", "a") as f:
+        f.write(f"LLM Result: {result.model_dump()}\n")
 
     last_updated_dates = sorted(
         {d.metadata.get("last_updated") for d in docs if d.metadata.get("last_updated")}
