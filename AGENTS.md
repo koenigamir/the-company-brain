@@ -29,13 +29,29 @@ Use this structure for new entries:
 
 ## Current Log
 
-### 2026-05-30 - Research Folder Created
+### 2026-05-30 - README / AGENTS Cleanup And Consolidation
 
-- Context: The generated research markdown files belonged together and should no longer live in the repo root.
-- Actions: Created `research/`, moved the existing research markdown files into it, and updated canonical README references.
-- Changes made: `group_idea_research.md` moved to `research/group_idea_research.md`; `step_by_step_procedure.md` moved to `research/step_by_step_procedure.md`.
-- Risks / open questions: Any stale references to the old root-level paths should be corrected when encountered.
-- Next agent: Look in `research/` first for generated planning, research, and analysis markdown files.
+- Context: The top-level docs had started to accumulate overlapping review notes and path clarifications, which made the repo harder to scan quickly.
+- Actions: Reviewed repo history, current layout, `README.md`, and all existing `AGENTS.md` entries, then consolidated overlapping 2026-05-30 notes into a smaller set while preserving the underlying findings.
+- Changes made: `README.md` now lists the current prototype entry points and the multimodal ingestion research memo, and adds an explicit rule to consolidate superseded `AGENTS.md` notes instead of stacking near-duplicates.
+- Risks / open questions: The log is cleaner, but it will drift again if future review notes are appended without folding them into the latest relevant entry.
+- Next agent: Keep adding new facts, but collapse overlapping review notes when a newer entry supersedes an older one.
+
+### 2026-05-30 - Prototype And Branch Review Findings
+
+- Context: Reviewed both the current Streamlit/LangChain prototype and branch `feature/tier1-graphrag` to understand the current implementation state and merge risks without switching the working tree.
+- Actions: Read `README.md`, checked repo state and recent history, reviewed `app.py`, `rag_engine.py`, `ingest.py`, `.env.example`, `.gitignore`, and `requirements.txt`, validated sample corpus file types, inspected the branch diff and the full contents of `graph_engine.py`, `knowledge_ops.py`, `rag_engine.py`, `ingest.py`, `app.py`, `README.md`, and `DEPLOY_AWS.md`, and ran syntax-level verification plus dependency-free graph checks.
+- Changes made: No product code changes. Established the current risk baseline: simulated role selection does not enforce access control, confidential-labeled content is not access-restricted, displayed role-owner and last-updated metadata are guessed or synthetic, ingestion still targets `data/` instead of canonical `Data/SIX_Hack_Zurich-main/`, runtime assumes dependencies, `chroma_db/`, and LLM access are already in place, and there are no automated tests.
+- Risks / open questions: The GraphRAG branch adds heuristic graph expansion and upload flow before the governance model is fixed; one keyword (`sustainab`) is compiled as an exact word and therefore does not match `sustainable`; branch docs reintroduced stale pre-`research/` paths; graph build, hybrid retrieval, upload persistence, and gap-routing behavior remain untested.
+- Next agent: Fix corpus-path portability and governance first, then add tests around ingest, retrieval, graph expansion, persistence, and gap routing before treating the branch as merge-ready.
+
+### 2026-05-30 - Research Folder And Canonical Corpus Alignment
+
+- Context: Generated planning/research docs were moved out of the repo root, and the official challenge corpus now coexists with duplicated top-level legacy copies under `Data/`.
+- Actions: Created `research/`, moved the existing generated markdown files there, and updated canonical README references so agent startup points to `research/step_by_step_procedure.md` and `Data/SIX_Hack_Zurich-main/`.
+- Changes made: `research/group_idea_research.md` and `research/step_by_step_procedure.md` are now the canonical research/planning paths; `Data/SIX_Hack_Zurich-main/` is documented as the canonical official corpus; duplicated top-level `Data/*` files are documented as legacy non-canonical copies.
+- Risks / open questions: The duplicate corpus files still exist physically and can still be targeted by code or scripts until the repo layout itself is cleaned up.
+- Next agent: Use `research/` first for planning/research docs and `Data/SIX_Hack_Zurich-main/` for new scripts or ingestion work unless there is a specific reason to inspect the legacy duplicates.
 
 ### 2026-05-30 - Multimodal Ingestion Model Research
 
@@ -44,22 +60,6 @@ Use this structure for new entries:
 - Changes made: Added `research/2026-05-30_multimodal_ingestion_model_research.md` and expanded it with a broader option landscape, AWS-credit-aware recommendations for a `100 CHF` two-day budget, additional managed-parser options, and retrieval backend alternatives beyond the original open-source-on-AWS path.
 - Risks / open questions: The live prototype still uses random role/freshness metadata and vector-only retrieval, and still lacks the normalized `data/normalized/*` artifacts described in planning docs; the best next implementation path still depends on whether the team prioritizes cheapest two-day delivery, AWS-native services, or open-source model hosting; `README.md`, `research/group_idea_research.md`, and the `research/step_by_step_procedure.md` move already had uncommitted changes and were not modified here.
 - Next agent: If implementation starts, decide first between the low-cost local-first path and the open-source-on-AWS path, then refactor `ingest.py` into modality-aware normalization, emit the shared normalized JSON contracts, and upgrade embeddings/reranking before changing answer synthesis or UI behavior.
-
-### 2026-05-30 - README Path And Corpus Clarification
-
-- Context: The repo docs had drifted from the working tree after `step_by_step_procedure.md` moved under `research/` and the official data pack coexisted with duplicated top-level copies under `Data/`.
-- Actions: Updated `README.md` so agent instructions now point to `research/step_by_step_procedure.md` and explicitly mark `Data/SIX_Hack_Zurich-main/` as the canonical official corpus.
-- Changes made: Canonical path references were aligned with the current repo layout; duplicated top-level files under `Data/` are now documented as non-canonical legacy copies for future work and scripts.
-- Risks / open questions: The duplicate files still exist physically under `Data/`, so code and scripts can still target them incorrectly until the repo layout itself is cleaned up.
-- Next agent: When reading challenge material or writing scripts, use `research/step_by_step_procedure.md` and `Data/SIX_Hack_Zurich-main/` unless there is a specific reason to inspect the legacy duplicates.
-
-### 2026-05-30 - Backend Familiarization Pass
-
-- Context: Reviewed the newly added Streamlit/LangChain backend after the RAG prototype commit to look for overlap and cleanup risks in a shared 4-coder workflow.
-- Actions: Read `app.py`, `rag_engine.py`, `ingest.py`, `requirements.txt`, git history, repo state, and current planning-doc diffs.
-- Changes made: No backend code changes; only this handoff entry was added.
-- Risks / open questions: `ingest.py` uses `DATA_DIR = "data"` while the repo currently has `Data/`; the latest commit duplicated the official files at `Data/` and `Data/SIX_Hack_Zurich-main/`; retrieval expects `chroma_db/` to exist but it is gitignored and not present; role/freshness metadata is synthetic/random; Streamlit role selection is display-only and not enforced in retrieval; `research/group_idea_research.md` and `research/step_by_step_procedure.md` already have uncommitted edits from another agent.
-- Next agent: Decide whether the backend should be repaired in-place for the current Streamlit demo or replaced by the planned `backend/` API structure before doing larger cleanup.
 
 ### 2026-05-30 - README / AGENTS Role Split
 
