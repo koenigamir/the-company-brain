@@ -1,0 +1,13 @@
+streamlit
+langchain
+langchain-anthropic
+langchain-community
+langchain-chroma
+langchain-huggingface
+sentence-transformers
+chromadb
+PyMuPDF
+python-docx
+openpyxl
+python-dotenv
+pydantic
