@@ -7,6 +7,8 @@ from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_chroma import Chroma
 from langchain_core.prompts import ChatPromptTemplate
 
+import graph_engine
+
 load_dotenv()
 
 CHROMA_DIR = "chroma_db"
@@ -45,7 +47,7 @@ Strict rules:
 - 'role_owner' must come from the most relevant chunk's metadata.
 """
 
-_llm = ChatAnthropic(model=LLM_MODEL, temperature=0)
+_llm = ChatAnthropic(model=LLM_MODEL, temperature=0, max_tokens=3000)
 _structured_llm = _llm.with_structured_output(WikiPage)
 
 _prompt = ChatPromptTemplate.from_messages(
@@ -56,14 +58,91 @@ _prompt = ChatPromptTemplate.from_messages(
 )
 
 
-def _get_retriever(k: int = 5):
-    embeddings = HuggingFaceEmbeddings(model_name=EMBED_MODEL)
-    store = Chroma(
-        collection_name=COLLECTION_NAME,
-        embedding_function=embeddings,
-        persist_directory=CHROMA_DIR,
+_store = None
+_graph = None
+
+
+def _get_store():
+    """Lazily build and cache the Chroma store (avoids reloading the embedding
+    model on every query)."""
+    global _store
+    if _store is None:
+        embeddings = HuggingFaceEmbeddings(model_name=EMBED_MODEL)
+        _store = Chroma(
+            collection_name=COLLECTION_NAME,
+            embedding_function=embeddings,
+            persist_directory=CHROMA_DIR,
+        )
+    return _store
+
+
+def _get_graph():
+    global _graph
+    if _graph is None:
+        _graph = graph_engine.load_graph()
+    return _graph
+
+
+def _dedupe(docs, limit):
+    """Deduplicate by (source_file, content prefix), preserving order."""
+    seen = set()
+    out = []
+    for d in docs:
+        key = (d.metadata.get("source_file"), d.page_content[:80])
+        if key in seen:
+            continue
+        seen.add(key)
+        out.append(d)
+        if len(out) >= limit:
+            break
+    return out
+
+
+def hybrid_retrieve(question, k_vector=5, k_graph=6, max_context=10):
+    """
+    GraphRAG (Tier 1) retrieval:
+      1. Vector search for the most semantically similar chunks (seed).
+      2. Detect entities in the question and expand one hop via the graph.
+      3. Pull the most relevant chunks from graph-linked documents.
+      4. Merge + dedupe so the LLM sees cross-document context.
+
+    Returns (context_docs, debug) where debug describes the graph path used.
+    """
+    store = _get_store()
+    graph = _get_graph()
+
+    seed = store.similarity_search(question, k=k_vector)
+    seed_files = {d.metadata.get("source_file") for d in seed}
+
+    detected = graph_engine.detect_entities(question)
+    expanded = graph_engine.expand_entities(detected)
+    candidate_files = graph_engine.documents_for_entities(graph, expanded)
+
+    # Cross-context is only useful when the graph surfaces RELATED documents the
+    # vector seed did not already find. Restrict the graph search to those.
+    new_files = [f for f in candidate_files if f not in seed_files]
+
+    graph_hits = []
+    if new_files:
+        graph_hits = store.similarity_search(
+            question,
+            k=k_graph,
+            filter={"source_file": {"$in": new_files}},
+        )
+
+    merged = _dedupe(seed + graph_hits, max_context)
+
+    added_files = sorted(
+        {d.metadata.get("source_file") for d in graph_hits} - seed_files
     )
-    return store.as_retriever(search_kwargs={"k": k})
+    debug = {
+        "entities_detected": detected,
+        "entities_expanded": [e for e in expanded if e not in detected],
+        "relation_paths": graph_engine.relation_paths(expanded),
+        "graph_added_files": added_files,
+        "used_graph": bool(detected) and bool(added_files),
+    }
+    return merged, debug
 
 
 def _format_context(docs) -> str:
@@ -80,8 +159,7 @@ def _format_context(docs) -> str:
 
 def query_brain(question: str) -> dict:
     """Retrieve, synthesize, and return a structured wiki page + raw metadata."""
-    retriever = _get_retriever()
-    docs = retriever.invoke(question)
+    docs, graph_debug = hybrid_retrieve(question)
 
     if not docs:
         return {
@@ -91,6 +169,7 @@ def query_brain(question: str) -> dict:
             "sources": [],
             "role_owner": "Master Data Ops",
             "last_updated_dates": [],
+            "graph": graph_debug,
         }
 
     context = _format_context(docs)
@@ -106,4 +185,5 @@ def query_brain(question: str) -> dict:
     out["last_updated_dates"] = last_updated_dates
     if not out.get("role_owner"):
         out["role_owner"] = docs[0].metadata.get("role_owner", "Master Data Ops")
+    out["graph"] = graph_debug
     return out

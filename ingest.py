@@ -7,14 +7,16 @@ from docx import Document as DocxDocument
 from openpyxl import load_workbook
 from dotenv import load_dotenv
 
-from langchain_text_splitters import RecursiveCharacterTextSplitter
+from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_core.documents import Document
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_chroma import Chroma
 
+import graph_engine
+
 load_dotenv()
 
-DATA_DIR = "Data/SIX_Hack_Zurich-main"
+DATA_DIR = "data"
 CHROMA_DIR = "chroma_db"
 COLLECTION_NAME = "company_brain"
 EMBED_MODEL = "sentence-transformers/all-MiniLM-L6-v2"
@@ -144,6 +146,14 @@ def main():
         persist_directory=CHROMA_DIR,
     )
     print(f"Saved vector store to ./{CHROMA_DIR}")
+
+    # Build the Tier 1 knowledge graph for hybrid (GraphRAG) retrieval.
+    graph = graph_engine.build_graph(all_docs)
+    graph_engine.save_graph(graph)
+    print(
+        f"Saved knowledge graph to ./{graph_engine.GRAPH_PATH}  "
+        f"({len(graph['documents'])} docs, {len(graph['entities'])} entities)"
+    )
 
 
 if __name__ == "__main__":

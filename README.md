@@ -25,8 +25,8 @@ Follow this sequence every time:
 - If `README.md` and `AGENTS.md` conflict, `README.md` wins.
 - Supporting context files currently include:
   - `group_idea_research.md` for brainstorming output and idea exploration
-  - `step_by_step_procedure.md` for current execution thinking and work split
-  - `Data/` for the official given challenge material
+  - `research/step_by_step_procedure.md` for current execution thinking and work split
+  - `Data/SIX_Hack_Zurich-main/` for the canonical official given challenge material
 - If a new durable rule, workflow, or top-level fact is discovered, update `README.md` first and then note the change briefly in `AGENTS.md`.
 
 ## Required Procedure For Every Agent
@@ -51,6 +51,7 @@ While working, every agent must follow these rules:
 - Do not invent missing product, architecture, setup, or implementation details.
 - Verify actual content of data files; do not trust extensions or filenames.
 - Treat the `Data/` directory as source material, not as automatically clean or perfectly curated input.
+- Treat `Data/SIX_Hack_Zurich-main/` as the canonical official corpus for new work and scripts. The duplicated top-level files directly under `Data/` are not the canonical source.
 - Avoid committing operating-system artifacts such as `.DS_Store`.
 - Prefer updating existing top-level docs over creating parallel or conflicting guidance.
 
@@ -158,6 +159,8 @@ The official given challenge material now lives under:
 
 This data pack is a core source of context for the project.
 
+The repository also currently contains duplicated copies of those files directly under `Data/`. Those top-level duplicates are legacy copies and should not be treated as the canonical source for new work, scripts, or documentation.
+
 ### Important Caveats
 
 Agents must assume the data pack is heterogeneous and imperfect:
@@ -173,7 +176,7 @@ Agents must assume the data pack is heterogeneous and imperfect:
 Agents should consult these when relevant:
 
 - `group_idea_research.md` for idea generation and early solution directions
-- `step_by_step_procedure.md` for current process thinking and task decomposition
+- `research/step_by_step_procedure.md` for current process thinking and task decomposition
 
 ### Likely Knowledge Systems In Scope
 
@@ -219,26 +222,15 @@ Update `AGENTS.md` when any of these happen:
 - there is a warning, blocker, or risk to hand off,
 - an agent wants to leave a short operational note for the next agent.
 
-## Architecture
-
-The Company Brain is built as a hybrid intelligence system:
-
-1.  **Ingestion & Governance Layer (S3 + ChromaDB)**: Raw data is processed from the `Data/` directory, chunked, and enriched with role-based metadata. The resulting vector index is stored and synced to **Amazon S3** for persistence.
-2.  **Reasoning Layer (Amazon Bedrock)**: We use **Claude 4.6 Sonnet on Amazon Bedrock** (via regional inference profiles in `eu-central-1`) to synthesize retrieved context into structured "Wiki Pages."
-3.  **Trust & Verification Layer (LLM Wiki)**: Answers are presented with confidence scores, source citations, and role ownership to ensure institutional trust.
-4.  **Gap Closure**: Missing knowledge is automatically identified and routed to the responsible role (e.g., ESG Compliance, Tax Team) as defined in the metadata.
-
-## Development State
-
-- **Tech Stack**: Python, Streamlit, LangChain, Amazon Bedrock (Claude 4.6), ChromaDB, S3.
-- **Environment**: The application is configured to run on AWS (Region: `eu-central-1`).
-- **AWS Credentials**: Managed via a `.env` file (see `.env.example`).
-- **Run Command**: `streamlit run app.py` (ensure AWS credentials are set in the shell or `.env`).
-
 ## Current Unknowns / Not Yet Decided
 
 These items are still intentionally open and must not be invented:
 
-- final deployment orchestration (e.g., Amplify Hosting vs ECS),
-- full GraphRAG implementation (currently using role-enriched vector metadata),
-- integration with internal SIX systems (SharePoint, Jira, etc.).
+- final application architecture,
+- final tech stack,
+- local setup procedure,
+- environment variable contract,
+- build / run / test commands,
+- deployment and infrastructure design.
+
+The challenge explicitly allows freedom in technology choice, so these should only be documented once they are actually decided.

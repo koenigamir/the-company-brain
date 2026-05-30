@@ -29,13 +29,29 @@ Use this structure for new entries:
 
 ## Current Log
 
-### 2026-05-30 - AWS Backend Linked
+### 2026-05-30 - Multimodal Ingestion Model Research
 
-- Context: The user provided IAM access codes to link the project to AWS for the backend.
-- Actions: Created a `.env` file in the project root with the provided AWS credentials and set the default region to `eu-central-1`.
-- Changes made: `.env` file added.
-- Risks / open questions: The `aws` CLI seems to have a broken installation in the anaconda environment. Credentials are currently stored in `.env` for development.
-- Next agent: Start implementing the ingestion pipeline using these credentials (e.g., S3 upload, Bedrock integration).
+- Context: Read the canonical repo docs first, then researched high-quality multimodal ingestion models and architectures that could normalize mixed enterprise content into the structure already envisioned for the Company Brain.
+- Actions: Read `README.md`, checked git state and recent history, reviewed `app.py`, `rag_engine.py`, `ingest.py`, `requirements.txt`, `group_idea_research.md`, and `research/step_by_step_procedure.md`, verified sample file contents and mislabeled extensions, and researched AWS, Bedrock vs SageMaker, Docling, Unstructured, MinerU, DeepSeek-OCR-2, Qwen3-VL, Whisper/WhisperX/pyannote, Mistral OCR, LlamaParse, multimodal retrieval models, retrieval backends, and relevant GitHub implementations.
+- Changes made: Added `research/2026-05-30_multimodal_ingestion_model_research.md` and expanded it with a broader option landscape, AWS-credit-aware recommendations for a `100 CHF` two-day budget, additional managed-parser options, and retrieval backend alternatives beyond the original open-source-on-AWS path.
+- Risks / open questions: The live prototype still uses random role/freshness metadata and vector-only retrieval, and still lacks the normalized `data/normalized/*` artifacts described in planning docs; the best next implementation path still depends on whether the team prioritizes cheapest two-day delivery, AWS-native services, or open-source model hosting; `README.md`, `group_idea_research.md`, and the `step_by_step_procedure.md` move already had uncommitted changes and were not modified here.
+- Next agent: If implementation starts, decide first between the low-cost local-first path and the open-source-on-AWS path, then refactor `ingest.py` into modality-aware normalization, emit the shared normalized JSON contracts, and upgrade embeddings/reranking before changing answer synthesis or UI behavior.
+
+### 2026-05-30 - README Path And Corpus Clarification
+
+- Context: The repo docs had drifted from the working tree after `step_by_step_procedure.md` moved under `research/` and the official data pack coexisted with duplicated top-level copies under `Data/`.
+- Actions: Updated `README.md` so agent instructions now point to `research/step_by_step_procedure.md` and explicitly mark `Data/SIX_Hack_Zurich-main/` as the canonical official corpus.
+- Changes made: Canonical path references were aligned with the current repo layout; duplicated top-level files under `Data/` are now documented as non-canonical legacy copies for future work and scripts.
+- Risks / open questions: The duplicate files still exist physically under `Data/`, so code and scripts can still target them incorrectly until the repo layout itself is cleaned up.
+- Next agent: When reading challenge material or writing scripts, use `research/step_by_step_procedure.md` and `Data/SIX_Hack_Zurich-main/` unless there is a specific reason to inspect the legacy duplicates.
+
+### 2026-05-30 - Backend Familiarization Pass
+
+- Context: Reviewed the newly added Streamlit/LangChain backend after the RAG prototype commit to look for overlap and cleanup risks in a shared 4-coder workflow.
+- Actions: Read `app.py`, `rag_engine.py`, `ingest.py`, `requirements.txt`, git history, repo state, and current planning-doc diffs.
+- Changes made: No backend code changes; only this handoff entry was added.
+- Risks / open questions: `ingest.py` uses `DATA_DIR = "data"` while the repo currently has `Data/`; the latest commit duplicated the official files at `Data/` and `Data/SIX_Hack_Zurich-main/`; retrieval expects `chroma_db/` to exist but it is gitignored and not present; role/freshness metadata is synthetic/random; Streamlit role selection is display-only and not enforced in retrieval; `group_idea_research.md` and `step_by_step_procedure.md` already have uncommitted edits from another agent.
+- Next agent: Decide whether the backend should be repaired in-place for the current Streamlit demo or replaced by the planned `backend/` API structure before doing larger cleanup.
 
 ### 2026-05-30 - README / AGENTS Role Split
 
