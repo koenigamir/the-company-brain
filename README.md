@@ -25,8 +25,8 @@ Follow this sequence every time:
 - If `README.md` and `AGENTS.md` conflict, `README.md` wins.
 - Supporting context files currently include:
   - `group_idea_research.md` for brainstorming output and idea exploration
-  - `step_by_step_procedure.md` for current execution thinking and work split
-  - `Data/` for the official given challenge material
+  - `research/step_by_step_procedure.md` for current execution thinking and work split
+  - `Data/SIX_Hack_Zurich-main/` for the canonical official given challenge material
 - If a new durable rule, workflow, or top-level fact is discovered, update `README.md` first and then note the change briefly in `AGENTS.md`.
 
 ## Required Procedure For Every Agent
@@ -51,6 +51,7 @@ While working, every agent must follow these rules:
 - Do not invent missing product, architecture, setup, or implementation details.
 - Verify actual content of data files; do not trust extensions or filenames.
 - Treat the `Data/` directory as source material, not as automatically clean or perfectly curated input.
+- Treat `Data/SIX_Hack_Zurich-main/` as the canonical official corpus for new work and scripts. The duplicated top-level files directly under `Data/` are not the canonical source.
 - Avoid committing operating-system artifacts such as `.DS_Store`.
 - Prefer updating existing top-level docs over creating parallel or conflicting guidance.
 
@@ -158,6 +159,8 @@ The official given challenge material now lives under:
 
 This data pack is a core source of context for the project.
 
+The repository also currently contains duplicated copies of those files directly under `Data/`. Those top-level duplicates are legacy copies and should not be treated as the canonical source for new work, scripts, or documentation.
+
 ### Important Caveats
 
 Agents must assume the data pack is heterogeneous and imperfect:
@@ -173,7 +176,7 @@ Agents must assume the data pack is heterogeneous and imperfect:
 Agents should consult these when relevant:
 
 - `group_idea_research.md` for idea generation and early solution directions
-- `step_by_step_procedure.md` for current process thinking and task decomposition
+- `research/step_by_step_procedure.md` for current process thinking and task decomposition
 
 ### Likely Knowledge Systems In Scope
 
