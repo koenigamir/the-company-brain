@@ -45,6 +45,15 @@ def today_iso() -> str:
     return datetime.date.today().isoformat()
 
 
+def file_modified_iso(path: str) -> str:
+    """Return the file's last-modified date (ISO). Falls back to today."""
+    try:
+        ts = os.path.getmtime(path)
+        return datetime.date.fromtimestamp(ts).isoformat()
+    except OSError:
+        return today_iso()
+
+
 def read_pdf(path: str) -> str:
     text_parts = []
     with fitz.open(path) as doc:
@@ -116,7 +125,7 @@ def file_to_documents(
         return []
 
     role_owner = role_owner or assign_role_owner(filename)
-    last_updated = last_updated or today_iso()
+    last_updated = last_updated or file_modified_iso(path)
     splitter = get_splitter()
 
     return [
@@ -132,6 +141,95 @@ def file_to_documents(
     ]
 
 
+def text_to_documents(
+    text: str,
+    filename: str,
+    role_owner: str,
+    last_updated: str,
+    modality: str = "document",
+    extractor: str = "",
+    confidence: float = 0.0,
+) -> list[Document]:
+    """Chunk already-extracted text into Documents, carrying modality metadata.
+
+    Used for inputs where text was produced by an extractor (e.g. image OCR)
+    rather than read directly from the file on disk.
+    """
+    if not text.strip():
+        return []
+    meta = {
+        "source_file": filename,
+        "role_owner": role_owner,
+        "last_updated": last_updated,
+        "source_modality": modality,
+    }
+    if extractor:
+        meta["extractor"] = extractor
+        meta["extraction_confidence"] = round(float(confidence), 3)
+    # Keep image OCR as one chunk when small — tables stay intact for retrieval.
+    if modality == "image" and len(text) <= 4000:
+        return [Document(page_content=text.strip(), metadata=dict(meta))]
+    return [
+        Document(page_content=chunk, metadata=dict(meta))
+        for chunk in get_splitter().split_text(text)
+    ]
+
+
+def _fmt_ts(seconds: float) -> str:
+    seconds = int(seconds)
+    return f"{seconds // 60:02d}:{seconds % 60:02d}"
+
+
+def segments_to_documents(
+    segments: list[dict],
+    filename: str,
+    role_owner: str,
+    last_updated: str,
+    modality: str = "audio",
+    extractor: str = "",
+    confidence: float = 0.0,
+) -> list[Document]:
+    """Group transcript segments into ~CHUNK_SIZE chunks carrying time refs."""
+    docs: list[Document] = []
+    buf: list[str] = []
+    buf_len = 0
+    start = segments[0]["start"] if segments else 0.0
+    end = start
+
+    def flush(seg_start: float, seg_end: float):
+        if not buf:
+            return
+        docs.append(
+            Document(
+                page_content=" ".join(buf).strip(),
+                metadata={
+                    "source_file": filename,
+                    "role_owner": role_owner,
+                    "last_updated": last_updated,
+                    "source_modality": modality,
+                    "time_ref": f"{_fmt_ts(seg_start)}-{_fmt_ts(seg_end)}",
+                    "extractor": extractor,
+                    "extraction_confidence": round(float(confidence), 3),
+                },
+            )
+        )
+
+    for seg in segments:
+        text = (seg.get("text") or "").strip()
+        if not text:
+            continue
+        if not buf:
+            start = seg["start"]
+        buf.append(text)
+        buf_len += len(text) + 1
+        end = seg["end"]
+        if buf_len >= CHUNK_SIZE:
+            flush(start, end)
+            buf, buf_len = [], 0
+    flush(start, end)
+    return docs
+
+
 def get_chroma_store() -> Chroma:
     embeddings = HuggingFaceEmbeddings(model_name=EMBED_MODEL)
     return Chroma(
@@ -139,14 +237,6 @@ def get_chroma_store() -> Chroma:
         embedding_function=embeddings,
         persist_directory=CHROMA_DIR,
     )
-
-
-def _remove_existing_chunks(store: Chroma, source_file: str) -> None:
-    """Delete prior chunks for this filename so re-upload replaces rather than duplicates."""
-    try:
-        store.delete(where={"source_file": source_file})
-    except Exception:
-        pass
 
 
 def add_file_to_brain(
@@ -174,8 +264,103 @@ def add_file_to_brain(
             tmp.write(file_bytes)
             parse_path = tmp.name
 
+    import media_ingest
+    import image_ingest
+
+    modality = media_ingest.modality_of(filename)
+    extractor = ""
+    confidence = 0.0
+    is_image_doc = False
+
     try:
-        docs = file_to_documents(parse_path, filename=filename, role_owner=role_owner)
+        if media_ingest.is_media(filename):
+            transcript = media_ingest.transcribe(parse_path, filename=filename)
+            text = transcript["text"]
+            extractor = transcript.get("extractor", "")
+            confidence = transcript.get("confidence", 0.0)
+            segments = transcript.get("segments") or []
+        elif image_ingest.is_image(filename):
+            extracted = image_ingest.extract(parse_path, filename=filename)
+            text = extracted["text"]
+            extractor = extracted.get("extractor", "")
+            confidence = extracted.get("confidence", 0.0)
+            modality = "image"
+            is_image_doc = True
+            segments = None
+        else:
+            text = extract_text(parse_path)
+            segments = None
+
+        if not text.strip():
+            return {
+                "ok": False,
+                "filename": filename,
+                "error": "Could not extract text/transcript from this file.",
+            }
+
+        # Dynamic role assignment: match against the SIX role catalog. A
+        # document may be owned by several roles when it spans domains.
+        role_reason = ""
+        role_owners = [role_owner] if role_owner else []
+        if role_owner is None:
+            from role_resolver import resolve_role
+
+            resolved = resolve_role(text, filename)
+            role_owner = resolved["role"]
+            role_owners = resolved.get("roles") or [role_owner]
+            role_reason = resolved["reason"]
+
+        last_updated = file_modified_iso(parse_path)
+        if segments is not None:
+            docs = segments_to_documents(
+                segments,
+                filename=filename,
+                role_owner=role_owner,
+                last_updated=last_updated,
+                modality=modality,
+                extractor=extractor,
+                confidence=confidence,
+            )
+            # Fallback: transcript text with no usable segments still gets chunked.
+            if not docs and text.strip():
+                docs = [
+                    Document(
+                        page_content=chunk,
+                        metadata={
+                            "source_file": filename,
+                            "role_owner": role_owner,
+                            "last_updated": last_updated,
+                            "source_modality": modality,
+                            "extractor": extractor,
+                            "extraction_confidence": round(float(confidence), 3),
+                        },
+                    )
+                    for chunk in get_splitter().split_text(text)
+                ]
+        elif is_image_doc:
+            docs = text_to_documents(
+                text,
+                filename=filename,
+                role_owner=role_owner,
+                last_updated=last_updated,
+                modality="image",
+                extractor=extractor,
+                confidence=confidence,
+            )
+        else:
+            docs = file_to_documents(
+                parse_path,
+                filename=filename,
+                role_owner=role_owner,
+                last_updated=last_updated,
+            )
+
+        # Record all owning roles on each chunk (Chroma needs a scalar value).
+        if not role_owners:
+            role_owners = [role_owner]
+        owners_str = ", ".join(role_owners)
+        for d in docs:
+            d.metadata["role_owners"] = owners_str
     finally:
         if not save_to_data_dir:
             os.unlink(parse_path)
@@ -187,9 +372,8 @@ def add_file_to_brain(
             "error": "Could not extract text from this file.",
         }
 
-    store = get_chroma_store()
-    _remove_existing_chunks(store, filename)
-    store.add_documents(docs)
+    vstore = get_chroma_store()
+    vstore.add_documents(docs)
 
     graph = graph_engine.load_graph() or {
         "documents": {},
@@ -201,10 +385,30 @@ def add_file_to_brain(
     graph = graph_engine.merge_document(graph, filename, role, chunk_texts)
     graph_engine.save_graph(graph)
 
+    # Persist the document ownership record (Supabase or local fallback).
+    try:
+        import store
+
+        store.upsert_document(
+            filename,
+            role,
+            docs[0].metadata["last_updated"],
+            len(docs),
+            modality=modality,
+            role_owners=role_owners,
+        )
+    except Exception:
+        pass
+
     return {
         "ok": True,
         "filename": filename,
         "chunks": len(docs),
         "role_owner": role,
+        "role_owners": role_owners,
+        "role_reason": role_reason,
+        "modality": modality,
+        "extractor": extractor,
+        "extraction_confidence": round(float(confidence), 3) if extractor else None,
         "entities": graph["documents"].get(filename, {}).get("entities", []),
     }

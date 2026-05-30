@@ -9,3 +9,4 @@ streamlit.log
 streamlit.pid
 tunnel.log
 tunnel.pid
+localstore/

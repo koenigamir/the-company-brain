@@ -11,3 +11,11 @@ python-docx
 openpyxl
 python-dotenv
 pydantic
+# Optional remote persistence (local JSON is default; see store.py):
+# supabase
+faster-whisper
+Pillow
+pillow-heif
+# Optional cloud transcription escalation:
+# openai
+# boto3
