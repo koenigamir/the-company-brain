@@ -1,6 +1,6 @@
 # Deploy Company Brain (GraphRAG) on AWS
 
-This branch adds **Tier 1 GraphRAG** behind a FastAPI backend. Streamlit remains the demo UI and can either call the backend over HTTP or run the GraphRAG code in-process for quick local testing.
+This branch adds **Tier 1 GraphRAG** plus multimodal ingestion behind a FastAPI backend. Streamlit remains the demo UI and can either call the backend over HTTP or run the GraphRAG code in-process for quick local testing.
 
 ## Current Status
 
@@ -10,7 +10,7 @@ Current branch caveats:
 
 - the GraphRAG code path defaults to lowercase `data/`, but can be pointed elsewhere with `COMPANY_BRAIN_DATA_DIR`,
 - the canonical official challenge corpus is `Data/SIX_Hack_Zurich-main/`,
-- top-level `Data/*` files are intentionally not used; the canonical corpus is the nested official folder.
+- top-level `Data/*` files are intentionally minimal; the branch has a few demo additions there, but the canonical official corpus remains the nested folder.
 
 If you are testing on a clean Linux or AWS environment, set the corpus/artifact environment variables explicitly before treating the deploy flow below as production-ready.
 
@@ -20,6 +20,11 @@ If you are testing on a clean Linux or AWS environment, set the corpus/artifact 
 |------|---------|
 | `graph_engine.py` | Domain ontology, graph build/load, entity detection, 1-hop expansion |
 | `knowledge_ops.py` | Shared extraction, chunking, incremental ingest, and graph-update utilities |
+| `media_ingest.py` | Audio/video transcription using local `faster-whisper` with optional cloud escalation |
+| `image_ingest.py` | Vision OCR/description extraction for screenshots and images |
+| `role_resolver.py` | Dynamic role assignment constrained to the SIX role catalog |
+| `store.py` | Local JSON or optional Supabase persistence for roles, documents, and gap tickets |
+| `supabase_schema.sql` | Optional Supabase schema for shared role/document/gap-ticket persistence |
 | `backend/api.py` | FastAPI backend exposing health, query, and ingest endpoints |
 | `api_client.py` | Streamlit HTTP client helpers for backend mode |
 | `Dockerfile.backend` | Backend container image definition for ECS/Fargate |
@@ -35,6 +40,7 @@ If you are testing on a clean Linux or AWS environment, set the corpus/artifact 
 - Python 3.9+
 - `ANTHROPIC_API_KEY` in `.env`
 - ~2 GB RAM (local embedding model + Chroma)
+- `ffmpeg` for local audio/video ingestion
 - Rotate any access keys that were pasted into chat or docs before deploying.
 
 ## Local setup (verify before AWS)
@@ -84,8 +90,11 @@ Use `start` before a demo or remote frontend test, then `stop` when done. The pu
 | Method | Path | Purpose |
 |--------|------|---------|
 | `GET` | `/health` | Returns artifact paths and whether `data`, `chroma_db`, and `graph.json` exist |
-| `POST` | `/query` | Body: `{"question": "..."}`. Returns the existing GraphRAG answer shape |
-| `POST` | `/ingest` | Multipart `file` plus optional `role_owner`. Adds the file to Chroma and graph |
+| `POST` | `/query` | Body: `{"question": "...", "history": []}`. Returns the GraphRAG answer shape |
+| `POST` | `/ingest` | Multipart `file` plus optional `role_owner`. Adds documents, media, or images to Chroma and graph |
+| `GET` | `/roles` | Returns dynamic role names and persistence backend |
+| `GET` | `/documents` | Returns persisted document ownership/freshness metadata |
+| `POST` | `/gap-ticket` | Persists reviewed knowledge-gap tickets |
 
 ## AWS ECS Fargate + EFS
 
@@ -96,6 +105,7 @@ Use `start` before a demo or remote frontend test, then `stop` when done. The pu
    - `COMPANY_BRAIN_DATA_DIR=/mnt/company-brain/data`
    - `COMPANY_BRAIN_CHROMA_DIR=/mnt/company-brain/chroma_db`
    - `COMPANY_BRAIN_GRAPH_PATH=/mnt/company-brain/graph.json`
+   - `COMPANY_BRAIN_STORE_DIR=/mnt/company-brain/localstore`
 4. Run ingestion once against the mounted paths. This can be a one-off ECS task using the same image with command `python ingest.py`, or a local run that syncs artifacts to EFS.
 5. Run the backend service on port `8000` behind an internal or restricted load balancer.
 6. Run Streamlit locally or separately with `COMPANY_BRAIN_API_URL` pointing at the backend URL.
@@ -131,6 +141,11 @@ Open only the required backend port to trusted clients, or put nginx / ALB + HTT
 | `COMPANY_BRAIN_DATA_DIR` | No | Upload/corpus directory; defaults to `data` |
 | `COMPANY_BRAIN_CHROMA_DIR` | No | Chroma vector store directory; defaults to `chroma_db` |
 | `COMPANY_BRAIN_GRAPH_PATH` | No | Knowledge graph JSON path; defaults to `graph.json` |
+| `COMPANY_BRAIN_STORE_DIR` | No | Local JSON persistence directory; defaults to `localstore` |
+| `VISION_MODEL` | No | Claude vision model for image ingestion; defaults to `claude-sonnet-4-6` |
+| `WHISPER_MODEL` | No | Local faster-whisper model for media ingestion; defaults to `small` |
+| `TRANSCRIBE_MIN_CONF` | No | Confidence threshold before optional cloud transcription escalation |
+| `SUPABASE_ENABLED`, `SUPABASE_URL`, `SUPABASE_KEY` | No | Optional remote persistence instead of local JSON |
 
 Embeddings are **local** (HuggingFace `all-MiniLM-L6-v2`) — no extra API key.
 
@@ -139,6 +154,7 @@ Embeddings are **local** (HuggingFace `all-MiniLM-L6-v2`) — no extra API key.
 - `chroma_db/` — vector store
 - `graph.json` — knowledge graph (rebuilt by `ingest.py`)
 - `data/` — local uploaded files when using incremental ingest
+- `localstore/` — local JSON roles, document records, and gap tickets
 - `.env` — secrets
 
 Both are in `.gitignore`. Teammates must run `python ingest.py` after clone unless you bake them into a Docker image.
@@ -146,11 +162,15 @@ Both are in `.gitignore`. Teammates must run `python ingest.py` after clone unle
 ## Architecture recap
 
 ```
-ingest.py  →  chroma_db/ (vectors)  +  graph.json (entity ↔ document links)
-backend/api.py → rag_engine.query_brain() / rag_engine.add_file_to_brain()
-app.py     →  backend HTTP API when COMPANY_BRAIN_API_URL is set
-rag_engine →  vector seed (k=5) + graph expansion (k=6 from new docs) → Claude
-graph_engine → detect_entities(question) → expand 1 hop → documents_for_entities()
+ingest.py      →  chroma_db/ (vectors) + graph.json (entity ↔ document links)
+media_ingest   →  audio/video transcript chunks
+image_ingest   →  image OCR/description chunks
+role_resolver  →  catalog-constrained owner assignment
+store.py       →  local JSON or Supabase roles/documents/gap tickets
+backend/api.py →  rag_engine.query_brain() / rag_engine.add_file_to_brain()
+app.py         →  backend HTTP API when COMPANY_BRAIN_API_URL is set
+rag_engine     →  vector seed + graph expansion + literal-token retrieval → Claude
+graph_engine   →  detect_entities(question) → expand 1 hop → documents_for_entities()
 ```
 
 ## Troubleshooting

@@ -32,7 +32,9 @@ function describeHealth(health: HealthResponse): HealthState {
     return {
       tone: "online",
       label: "Knowledge live",
-      detail: "Graph and vector index are available.",
+      detail: health.store_dir_exists
+        ? "Graph, vector index, and store are available."
+        : "Graph and vector index are available.",
     };
   }
 

@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 
 import { ingestCompanyBrainFile } from "@/lib/companyBrain";
 
+export const maxDuration = 60;
+
 export async function POST(request: Request) {
   try {
     const formData = await request.formData();

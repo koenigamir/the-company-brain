@@ -1,4 +1,12 @@
-import type { CompanyBrainAnswer, HealthResponse } from "@/types/companyBrain";
+import type {
+  CompanyBrainAnswer,
+  DocumentsResponse,
+  GapTicketRequest,
+  GapTicketResponse,
+  HealthResponse,
+  QueryRequest,
+  RolesResponse,
+} from "@/types/companyBrain";
 
 const REQUEST_TIMEOUT_MS = 120_000;
 
@@ -28,13 +36,14 @@ async function fetchWithTimeout(
 
 export async function queryCompanyBrain(
   question: string,
+  history: Array<Record<string, string>> = [],
 ): Promise<CompanyBrainAnswer> {
   const response = await fetchWithTimeout(`${backendBaseUrl()}/query`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ question }),
+    body: JSON.stringify({ question, history }),
   });
 
   if (!response.ok) {
@@ -43,6 +52,12 @@ export async function queryCompanyBrain(
   }
 
   return (await response.json()) as CompanyBrainAnswer;
+}
+
+export async function queryCompanyBrainWithPayload(
+  payload: QueryRequest,
+): Promise<CompanyBrainAnswer> {
+  return queryCompanyBrain(payload.question, payload.history || []);
 }
 
 export async function getCompanyBrainHealth(): Promise<HealthResponse> {
@@ -70,4 +85,49 @@ export async function ingestCompanyBrainFile(formData: FormData): Promise<unknow
   }
 
   return response.json();
+}
+
+export async function getCompanyBrainRoles(): Promise<RolesResponse> {
+  const response = await fetchWithTimeout(`${backendBaseUrl()}/roles`, {
+    method: "GET",
+  });
+
+  if (!response.ok) {
+    const detail = await response.text();
+    throw new Error(detail || `Backend returned ${response.status}.`);
+  }
+
+  return (await response.json()) as RolesResponse;
+}
+
+export async function getCompanyBrainDocuments(): Promise<DocumentsResponse> {
+  const response = await fetchWithTimeout(`${backendBaseUrl()}/documents`, {
+    method: "GET",
+  });
+
+  if (!response.ok) {
+    const detail = await response.text();
+    throw new Error(detail || `Backend returned ${response.status}.`);
+  }
+
+  return (await response.json()) as DocumentsResponse;
+}
+
+export async function createCompanyBrainGapTicket(
+  payload: GapTicketRequest,
+): Promise<GapTicketResponse> {
+  const response = await fetchWithTimeout(`${backendBaseUrl()}/gap-ticket`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    const detail = await response.text();
+    throw new Error(detail || `Backend returned ${response.status}.`);
+  }
+
+  return (await response.json()) as GapTicketResponse;
 }

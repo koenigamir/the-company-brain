@@ -1,9 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 
-import type { CompanyBrainIngestResult } from "../../types/companyBrain";
+import type {
+  CompanyBrainIngestResult,
+  RolesResponse,
+} from "../../types/companyBrain";
 
 const roleOptions = [
   "Auto-detect from filename",
@@ -12,7 +15,21 @@ const roleOptions = [
   "Tax Team",
 ];
 
-const acceptedFileTypes = [".pdf", ".docx", ".xlsx", ".xlsm", ".txt"];
+const acceptedFileTypes = [
+  ".pdf",
+  ".docx",
+  ".xlsx",
+  ".xlsm",
+  ".txt",
+  ".png",
+  ".jpg",
+  ".jpeg",
+  ".webp",
+  ".mp3",
+  ".mp4",
+  ".m4a",
+  ".wav",
+];
 
 export default function UploadPage() {
   const [file, setFile] = useState<File | null>(null);
@@ -20,6 +37,34 @@ export default function UploadPage() {
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<CompanyBrainIngestResult | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [availableRoles, setAvailableRoles] = useState(roleOptions);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadRoles() {
+      try {
+        const response = await fetch("/api/company-brain/roles", {
+          cache: "no-store",
+        });
+        const body = (await response.json()) as RolesResponse;
+        if (!response.ok || !body.roles?.length) {
+          return;
+        }
+        if (isMounted) {
+          setAvailableRoles([roleOptions[0], ...body.roles]);
+        }
+      } catch {
+        // Keep the static fallback list if the roles endpoint is unavailable.
+      }
+    }
+
+    void loadRoles();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   async function submitUpload(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -64,7 +109,8 @@ export default function UploadPage() {
         <h1>Add new knowledge to Seven</h1>
         <p className="lede">
           Upload reference documents so the backend can extract text, create chunks,
-          update the vector store, and connect the material into the graph.
+          update the vector store, persist metadata, and connect the material into
+          the graph.
         </p>
       </section>
 
@@ -99,7 +145,7 @@ export default function UploadPage() {
               onChange={(event) => setRoleOwner(event.target.value)}
               value={roleOwner}
             >
-              {roleOptions.map((option) => (
+              {availableRoles.map((option) => (
                 <option key={option} value={option}>
                   {option}
                 </option>
@@ -134,7 +180,7 @@ export default function UploadPage() {
               <p>
                 This flow is built for documents tied to product coverage, regulatory
                 interpretation, ESG disclosures, tax workflows, and reference-data
-                operations.
+                operations, plus screenshots, transcripts, and short demo media.
               </p>
             </div>
           </div>
@@ -150,8 +196,8 @@ export default function UploadPage() {
             <section className="feedbackCard successCard">
               <strong>Document indexed</strong>
               <p>
-                {result.filename} was added to Seven with {result.chunks} generated
-                chunks.
+                {result.filename || "The file"} was added to Seven with{" "}
+                {result.chunks ?? "new"} generated chunks.
               </p>
               <dl className="detailGrid">
                 <div className="detailTile">

@@ -4,15 +4,17 @@ Use this as the handoff for the four developers working on the AWS backend, Stre
 
 ## What Exists Now
 
-The current production-like backend is FastAPI on ECS Fargate. It wraps the existing GraphRAG runtime:
+The current production-like backend is FastAPI on ECS Fargate. It wraps the current GraphRAG runtime:
 
 ```text
 frontend client
   -> HTTP API
   -> FastAPI backend on ECS
-  -> Chroma vector store + graph.json on EFS
+  -> Chroma vector store + graph.json + localstore on EFS
   -> Claude Sonnet 4.6 through Anthropic
 ```
+
+The backend now supports document, image, audio, and video ingest. Images use Claude vision OCR/description; audio/video use local `faster-whisper` with optional cloud escalation. Roles, document ownership, and gap tickets persist to local JSON by default or Supabase when explicitly enabled.
 
 The backend service is normally stopped (`desired-count = 0`) unless somebody is testing.
 
@@ -34,6 +36,15 @@ Put only app secrets in `.env`, such as:
 
 ```text
 ANTHROPIC_API_KEY=...
+```
+
+For AWS-compatible local runs, the important runtime paths are:
+
+```text
+COMPANY_BRAIN_DATA_DIR=data
+COMPANY_BRAIN_CHROMA_DIR=chroma_db
+COMPANY_BRAIN_GRAPH_PATH=graph.json
+COMPANY_BRAIN_STORE_DIR=localstore
 ```
 
 Do not commit `.env`. AWS credentials should be configured through the local AWS profile `company-brain`, not through `.env`.
@@ -60,7 +71,7 @@ Stop AWS compute when done:
 
 ## Next.js / Vercel Developer Workflow
 
-The migration starter lives in `frontend-next/`.
+The clean frontend handoff lives in `frontend-next/`. It is a functional developer workspace for the migrated backend contract, not the final visual product.
 
 ```bash
 cd frontend-next
@@ -70,7 +81,7 @@ cp .env.local.example .env.local
 Set:
 
 ```text
-COMPANY_BRAIN_API_URL=http://x.x.x.x:8000
+COMPANY_BRAIN_API_URL=http://63.176.100.250:8000
 ```
 
 Then:
@@ -83,6 +94,19 @@ npm run dev
 
 The Next.js app calls its own API routes under `/api/company-brain/*`. Those server routes proxy to the AWS backend, so the backend URL remains a server-side env var.
 
+Current frontend proxy routes:
+
+```text
+GET  /api/company-brain/health
+GET  /api/company-brain/roles
+GET  /api/company-brain/documents
+POST /api/company-brain/query
+POST /api/company-brain/ingest
+POST /api/company-brain/gap-ticket
+```
+
+Read `frontend-next/README.md` before changing the frontend. It is the handoff for frontend developers and their agents.
+
 Use Node 22 LTS for local frontend work and Vercel parity. If `npm run typecheck` or `npm run build` hangs locally, remove generated artifacts and reinstall under Node 22:
 
 ```bash
@@ -91,7 +115,7 @@ nvm use
 npm install
 ```
 
-For Vercel, set project root to `frontend-next` and configure the `COMPANY_BRAIN_API_URL` environment variable in Vercel. Do not use `NEXT_PUBLIC_` for the backend URL unless the backend is intentionally public and stable.
+For Vercel, set project root to `frontend-next` and configure the `COMPANY_BRAIN_API_URL` environment variable in Vercel. Do not use `NEXT_PUBLIC_` for the backend URL.
 
 ## Suggested Developer Split
 
@@ -106,6 +130,6 @@ Run from repo root:
 
 ```bash
 python3 -m unittest discover -s tests
-PYTHONPYCACHEPREFIX=/tmp/company-brain-pycache python3 -m py_compile app.py api_client.py rag_engine.py graph_engine.py knowledge_ops.py ingest.py backend/api.py
+PYTHONPYCACHEPREFIX=/tmp/company-brain-pycache python3 -m py_compile app.py api_client.py rag_engine.py graph_engine.py knowledge_ops.py ingest.py backend/api.py store.py role_resolver.py media_ingest.py image_ingest.py
 rg -n "sk-ant-api|AKIA|AWS_SECRET_ACCESS_KEY|AWS_ACCESS_KEY_ID" --glob '!Data/**' --glob '!chroma_db/**' --glob '!data/**' --glob '!.env' --glob '!.venv/**' .
 ```

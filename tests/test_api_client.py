@@ -19,7 +19,28 @@ class CompanyBrainApiClientTests(unittest.TestCase):
         self.assertEqual(result["confidence"], "High")
         post.assert_called_once_with(
             "http://backend.local/query",
-            json={"question": "What supports SFDR?"},
+            json={"question": "What supports SFDR?", "history": []},
+            timeout=120,
+        )
+
+    def test_query_posts_history_to_backend(self):
+        import api_client
+
+        response = Mock()
+        response.json.return_value = {"confidence": "Medium", "short_answer": "ok"}
+        response.raise_for_status.return_value = None
+
+        history = [{"role": "user", "content": "What is FATCA?"}]
+        with patch("api_client.requests.post", return_value=response) as post:
+            api_client.query_brain_remote(
+                "http://backend.local/",
+                "And QI?",
+                history=history,
+            )
+
+        post.assert_called_once_with(
+            "http://backend.local/query",
+            json={"question": "And QI?", "history": history},
             timeout=120,
         )
 
@@ -44,6 +65,19 @@ class CompanyBrainApiClientTests(unittest.TestCase):
         self.assertEqual(kwargs["data"], {"role_owner": "Tax Team"})
         self.assertEqual(kwargs["files"]["file"], ("note.txt", b"hello"))
         self.assertEqual(kwargs["timeout"], 300)
+
+    def test_roles_gets_backend_roles(self):
+        import api_client
+
+        response = Mock()
+        response.json.return_value = {"roles": ["Tax Team"]}
+        response.raise_for_status.return_value = None
+
+        with patch("api_client.requests.get", return_value=response) as get:
+            roles = api_client.list_roles_remote("http://backend.local")
+
+        self.assertEqual(roles, ["Tax Team"])
+        get.assert_called_once_with("http://backend.local/roles", timeout=30)
 
 
 if __name__ == "__main__":

@@ -15,6 +15,14 @@ class RuntimeConfigTests(unittest.TestCase):
             "/tmp/company-brain-test/graph.json",
         )
 
+    def test_store_dir_comes_from_environment(self):
+        os.environ["COMPANY_BRAIN_STORE_DIR"] = "/tmp/company-brain-test/store"
+
+        import store
+
+        importlib.reload(store)
+        self.assertEqual(store.LOCAL_DIR, "/tmp/company-brain-test/store")
+
 
 if __name__ == "__main__":
     unittest.main()

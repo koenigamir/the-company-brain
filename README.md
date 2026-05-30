@@ -27,7 +27,7 @@ Follow this sequence every time:
   - `app.py`, `api_client.py`, `backend/api.py`, `rag_engine.py`, `ingest.py`, `graph_engine.py`, `knowledge_ops.py`, and `requirements.txt` for the current branch code path
   - `DEPLOY_AWS.md` for branch-specific GraphRAG deployment notes
   - `docs/aws_backend_runbook.md`, `docs/developer_environment.md`, and `docs/next_vercel_migration.md` for the current developer handoff
-  - `frontend-next/` for the Vercel / Next.js frontend with a welcome page, query workspace, and upload workspace
+  - `frontend-next/` for the Vercel / Next.js migration starter
   - `research/group_idea_research.md` for brainstorming output and idea exploration
   - `research/step_by_step_procedure.md` for current execution thinking and work split
   - `research/2026-05-30_multimodal_ingestion_model_research.md` for ingestion-model and retrieval-stack research
@@ -219,24 +219,25 @@ Agents should treat these as part of the real-world problem context even when th
 
 ## Current Repo Snapshot
 
-- `app.py`, `backend/api.py`, `api_client.py`, `rag_engine.py`, `ingest.py`, `graph_engine.py`, and `knowledge_ops.py` are the current branch entry points and helper modules.
+- `app.py`, `backend/api.py`, `api_client.py`, `rag_engine.py`, `ingest.py`, `graph_engine.py`, `knowledge_ops.py`, `store.py`, `role_resolver.py`, `media_ingest.py`, and `image_ingest.py` are the current branch entry points and helper modules.
 - The current product code is still a prototype and must not be mistaken for the final architecture.
-- This branch adds Tier 1 GraphRAG retrieval, incremental upload utilities, a FastAPI backend boundary, Streamlit API-client mode, AWS runbook scripts, a Next.js/Vercel migration starter, and `DEPLOY_AWS.md`.
-- `frontend-next/` now contains the branded Seven frontend with pages at `/`, `/query`, and `/upload`, while browser requests continue to flow through `frontend-next/app/api/company-brain/*`.
+- This branch adds Tier 1 GraphRAG retrieval, multimodal incremental upload utilities, dynamic role routing, local/Supabase persistence for roles/documents/gap tickets, a FastAPI backend boundary, Streamlit API-client mode, AWS runbook scripts, a Next.js/Vercel migration starter, and `DEPLOY_AWS.md`.
 - `research/` holds generated planning, research, and analysis markdown.
 - `Data/SIX_Hack_Zurich-main/` is the canonical official challenge corpus.
-- Top-level `Data/*` is intentionally empty after cleanup; keep the canonical nested corpus under `Data/SIX_Hack_Zurich-main/` and only add top-level fixtures when a task genuinely needs them.
-- The GraphRAG code path defaults to lowercase `data/` for uploaded files, `chroma_db/` for vectors, and `graph.json` for the graph; AWS or clean-room runs should set `COMPANY_BRAIN_DATA_DIR`, `COMPANY_BRAIN_CHROMA_DIR`, and `COMPANY_BRAIN_GRAPH_PATH` explicitly.
+- Top-level `Data/*` should stay minimal. The current branch keeps branch-local demo additions there, including `Data/six-annual-report-2025-en.pdf` and `Data/Screenshot 2026-05-30 at 21.30.09.png`; do not restore duplicate copies of the canonical nested corpus.
+- The GraphRAG code path defaults to lowercase `data/` for uploaded files, `chroma_db/` for vectors, `graph.json` for the graph, and `localstore/` for role/document/gap-ticket JSON. AWS or clean-room runs should set `COMPANY_BRAIN_DATA_DIR`, `COMPANY_BRAIN_CHROMA_DIR`, `COMPANY_BRAIN_GRAPH_PATH`, and `COMPANY_BRAIN_STORE_DIR` explicitly.
 
 ## Current Runtime Contract
 
 - Local in-process demo: run `python ingest.py`, then `streamlit run app.py`.
 - Backend demo: run `uvicorn backend.api:app --host 0.0.0.0 --port 8000`, then run Streamlit with `COMPANY_BRAIN_API_URL=http://localhost:8000`.
-- Backend endpoints are `GET /health`, `POST /query`, and `POST /ingest`.
+- Backend endpoints are `GET /health`, `POST /query`, `POST /ingest`, `GET /roles`, `GET /documents`, and `POST /gap-ticket`.
 - Required secret for answer synthesis is `ANTHROPIC_API_KEY`.
+- Optional multimodal settings include `VISION_MODEL`, `WHISPER_MODEL`, `TRANSCRIBE_MIN_CONF`, `OPENAI_API_KEY`, `OPENAI_TRANSCRIBE_MODEL`, `AWS_REGION`, and `TRANSCRIBE_S3_BUCKET`.
+- Supabase persistence is opt-in with `SUPABASE_ENABLED=true`, `SUPABASE_URL`, and `SUPABASE_KEY`; local JSON persistence remains the default.
 - AWS deployment target for this branch is ECS Fargate with EFS-mounted GraphRAG artifacts, as documented in `DEPLOY_AWS.md`.
 - AWS backend operations are wrapped by `./scripts/aws_backend.sh`; keep desired count at `0` when nobody is testing.
-- The Next.js/Vercel frontend lives in `frontend-next/`; use Node 22 via `frontend-next/.nvmrc`, set Vercel project root to `frontend-next`, configure `COMPANY_BRAIN_API_URL` as a server-side environment variable, and keep browser-side requests pointed at the proxy routes in `frontend-next/app/api/company-brain/*`.
+- Next.js/Vercel migration work starts in `frontend-next/`; read `frontend-next/README.md`, use Node 22 via `frontend-next/.nvmrc`, set Vercel project root to `frontend-next`, and configure `COMPANY_BRAIN_API_URL` as a server-side environment variable. Browser components must call `/api/company-brain/*`, not the AWS backend directly.
 
 ## What To Update When Facts Change
 

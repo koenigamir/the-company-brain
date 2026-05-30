@@ -29,13 +29,21 @@ Use this structure for new entries:
 
 ## Current Log
 
-### 2026-05-30 - Seven Frontend Implemented
+### 2026-05-31 - Frontend Handoff Updated
 
-- Context: The Next/Vercel starter needed to become the real user-facing frontend for the existing FastAPI backend.
-- Actions: Re-read the README and migration notes, mapped the backend query/health/ingest contract, wrote compact design and plan docs under `docs/superpowers/`, added lightweight frontend tests, replaced the placeholder Next page with a branded three-page Seven experience, and verified the frontend with `npm test`, `npm run typecheck`, and `npm run build` in `frontend-next/`.
-- Changes made: `frontend-next/` now ships a Welcome page at `/`, a Query workspace at `/query`, an Upload workspace at `/upload`, shared Seven branding/navigation, backend health visibility, full answer rendering including graph and gap-routing details, and a user-facing ingest flow; README now reflects the new frontend shape.
-- Risks / open questions: The frontend still depends on the current direct ECS backend URL and does not solve the existing auth/HTTPS/governance gaps; in-app browser visual verification was not completed in this session because the bundled Browser plugin was missing the runtime file its own skill requires.
-- Next agent: Continue from `frontend-next/`, keep using the proxy routes under `app/api/company-brain/*`, and if you want browser-based visual checks in Codex first confirm the Browser plugin runtime is installed correctly.
+- Context: After the migrated GraphRAG backend was deployed to ECS task definition revision 2, `frontend-next/` needed to be cleaned up as the frontend developer handoff.
+- Actions: Restored the preserved Seven frontend progress from the pre-migration stash, reworked the Next.js proxy layer around the live migrated backend contract, added exact frontend setup notes, and updated handoff docs.
+- Changes made: Added proxy routes for roles, documents, and gap tickets; expanded frontend request/response types; preserved the Seven landing/query/upload pages, shared header, brand mark, presentation helpers, and tests; updated query/upload to use the migrated backend answer, role, ingest, and gap-ticket flows; added `frontend-next/README.md`; updated README and developer migration docs.
+- Risks / open questions: The checked-in UI is still a developer workspace, not the final Seven product interface; the current backend URL `http://63.176.100.250:8000` is an ECS public task IP and can change after restart; ALB/HTTPS/auth remain open.
+- Next agent: Frontend developers should start in `frontend-next/README.md`, keep browser code behind `/api/company-brain/*`, and run `npm run typecheck` plus `npm run build` before pushing UI changes.
+
+### 2026-05-30 - New GraphRAG Architecture Migration
+
+- Context: After the AWS backend branch was pushed, `origin/feature/tier1-graphrag` advanced with a new architecture for multimodal ingest, role resolution, local/Supabase persistence, and literal-token retrieval.
+- Actions: Pulled/fetched first, stashed unrelated local frontend changes as `pre-migration preserve local frontend changes`, merged `origin/feature/tier1-graphrag` into `codex/aws-backend-graphrag`, and resolved conflicts by keeping AWS/Next infrastructure while adopting the new RAG architecture.
+- Changes made: Added `image_ingest.py`, `media_ingest.py`, `role_resolver.py`, `store.py`, `supabase_schema.sql`, new demo data assets, expanded API endpoints for roles/documents/gap tickets, preserved Streamlit API-client mode, and updated docs for multimodal runtime paths and Vercel contract.
+- Risks / open questions: The running AWS service still needs a rebuilt backend image and ECS rollout before these new code paths are active remotely; raw Fargate public IP remains temporary; the pre-migration stash still exists and should be reviewed before dropping.
+- Next agent: Rebuild/push the backend image, add `COMPANY_BRAIN_STORE_DIR=/mnt/company-brain/localstore` to the ECS task definition, force a new ECS deployment, run smoke tests, then decide whether to reapply or discard the preserved local frontend stash.
 
 ### 2026-05-30 - README And Agent Log Audit
 

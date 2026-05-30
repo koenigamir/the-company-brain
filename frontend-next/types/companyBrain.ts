@@ -6,29 +6,32 @@ export type GraphDebug = {
   used_graph?: boolean;
 };
 
+export type GapRouting = {
+  routed_to?: string;
+  routed_roles?: string[];
+  reason?: string;
+  routing_confidence?: string;
+  signals?: Record<string, unknown>;
+  graph_entities?: string[];
+};
+
 export type GapSignals = {
   entity_role_counts?: Record<string, number>;
   chunk_role_counts?: Record<string, number>;
-  entities_detected?: string[];
-  entity_suggested_role?: string;
-  max_chunk_role?: string;
-  [key: string]: unknown;
-};
-
-export type GapRouting = {
-  routed_to?: string;
-  reason?: string;
-  routing_confidence?: string;
-  signals?: GapSignals;
-  graph_entities?: string[];
 };
 
 export type CompanyBrainAnswer = {
   title: string;
-  summary: string;
+  short_answer: string;
+  detailed_answer?: string;
+  summary?: string;
   confidence: "High" | "Medium" | "Low" | string;
+  used_llm_knowledge?: boolean;
   sources: string[];
   role_owner: string;
+  gap_required?: boolean;
+  missing_topics?: string[];
+  gap_ticket_draft?: string;
   last_updated_dates?: string[];
   graph?: GraphDebug;
   gap_routing?: GapRouting;
@@ -39,17 +42,60 @@ export type HealthResponse = {
   data_dir: string;
   chroma_dir: string;
   graph_path: string;
+  store_dir: string;
   data_dir_exists: boolean;
   chroma_dir_exists: boolean;
   graph_exists: boolean;
+  store_dir_exists: boolean;
   collection_name: string;
 };
 
+export type RolesResponse = {
+  roles: string[];
+  backend: "local" | "supabase" | string;
+};
+
+export type CompanyBrainDocument = {
+  id?: string;
+  filename?: string;
+  source?: string;
+  role_owner?: string;
+  owner?: string;
+  uploaded_at?: string;
+  last_updated?: string;
+  status?: string;
+  [key: string]: unknown;
+};
+
+export type DocumentsResponse = {
+  documents: CompanyBrainDocument[];
+};
+
+export type GapTicketRequest = {
+  question: string;
+  gap: string;
+  body?: string;
+  missing_topics?: string[];
+};
+
+export type GapTicketResponse = {
+  ok?: boolean;
+  ticket?: Record<string, unknown>;
+  [key: string]: unknown;
+};
+
+export type QueryRequest = {
+  question: string;
+  history?: Array<Record<string, string>>;
+};
+
 export type CompanyBrainIngestResult = {
-  ok: boolean;
-  filename: string;
+  ok?: boolean;
+  filename?: string;
   chunks?: number;
   role_owner?: string;
+  owner?: string;
   entities?: string[];
-  error?: string;
+  message?: string;
+  [key: string]: unknown;
 };

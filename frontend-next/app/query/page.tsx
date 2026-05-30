@@ -23,6 +23,7 @@ export default function QueryPage() {
   const [answer, setAnswer] = useState<CompanyBrainAnswer | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isCreatingTicket, setIsCreatingTicket] = useState(false);
   const [ticketCreated, setTicketCreated] = useState(false);
 
   const answerMode = describeAnswerMode(answer?.graph);
@@ -143,8 +144,15 @@ export default function QueryPage() {
               </div>
 
               <div className="summaryCard">
-                <p>{answer.summary}</p>
+                <p>{answer.short_answer || answer.summary}</p>
               </div>
+
+              {answer.detailed_answer ? (
+                <section className="insightPanel">
+                  <h3>Detailed answer</h3>
+                  <p className="preWrapText">{answer.detailed_answer}</p>
+                </section>
+              ) : null}
 
               <dl className="detailGrid">
                 <div className="detailTile">
@@ -250,10 +258,53 @@ export default function QueryPage() {
                   <div className="actionRow">
                     <button
                       className="primaryButton"
-                      onClick={() => setTicketCreated(true)}
+                      disabled={isCreatingTicket}
+                      onClick={async () => {
+                        setIsCreatingTicket(true);
+                        setError(null);
+                        try {
+                          const response = await fetch(
+                            "/api/company-brain/gap-ticket",
+                            {
+                              method: "POST",
+                              headers: {
+                                "Content-Type": "application/json",
+                              },
+                              body: JSON.stringify({
+                                question,
+                                gap:
+                                  answer.gap_ticket_draft ||
+                                  answer.missing_topics?.join(", ") ||
+                                  answer.gap_routing?.reason ||
+                                  "Knowledge gap review requested.",
+                                body:
+                                  answer.gap_ticket_draft ||
+                                  answer.gap_routing?.reason ||
+                                  "Knowledge gap review requested.",
+                                missing_topics: answer.missing_topics || [],
+                              }),
+                            },
+                          );
+                          const body = await response.json();
+                          if (!response.ok) {
+                            throw new Error(body.error ?? "Gap ticket failed.");
+                          }
+                          setTicketCreated(true);
+                        } catch (err) {
+                          setError(
+                            err instanceof Error
+                              ? err.message
+                              : "Gap ticket failed.",
+                          );
+                        } finally {
+                          setIsCreatingTicket(false);
+                        }
+                      }}
                       type="button"
                     >
-                      Route to subject matter expert
+                      {isCreatingTicket
+                        ? "Routing..."
+                        : "Route to subject matter expert"}
                     </button>
                     {ticketCreated ? (
                       <span className="inlineSuccess">
