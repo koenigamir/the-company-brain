@@ -22,7 +22,7 @@ import re
 import json
 from collections import defaultdict
 
-GRAPH_PATH = "graph.json"
+GRAPH_PATH = os.getenv("COMPANY_BRAIN_GRAPH_PATH", "graph.json")
 
 # ---------------------------------------------------------------------------
 # Domain ontology: canonical entity -> keywords that imply it.

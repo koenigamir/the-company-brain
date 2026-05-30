@@ -29,6 +29,46 @@ Use this structure for new entries:
 
 ## Current Log
 
+### 2026-05-30 - Developer Environment And Next Starter
+
+- Context: The team needed a shared developer handoff after the AWS backend deployment, plus a starting point for replacing Streamlit with Vercel + Next.js.
+- Actions: Added runbooks, an AWS backend helper script, and a `frontend-next/` Next.js starter that proxies browser requests through Next API routes to the FastAPI backend.
+- Changes made: Added `docs/aws_backend_runbook.md`, `docs/developer_environment.md`, `docs/next_vercel_migration.md`, `scripts/aws_backend.sh`, and the `frontend-next/` app with query, health, and ingest proxy routes.
+- Risks / open questions: The Next.js starter is a functional migration baseline, not a finished product UI; Vercel still needs project setup with root `frontend-next` and server-side `COMPANY_BRAIN_API_URL`; backend auth/HTTPS/stable DNS remain open.
+- Next agent: Start from `docs/developer_environment.md`, use `./scripts/aws_backend.sh start` only while testing, and implement the Next.js UI against `/api/company-brain/*` rather than calling AWS directly from browser code.
+
+### 2026-05-30 - AWS ECS Backend Deployed
+
+- Context: Continued the `codex/aws-backend-graphrag` backend deployment after AWS profile setup and credential rotation.
+- Actions: Created AWS resources in account `669960693304` / `eu-central-1`: ECR repo, CodeBuild project, ECS cluster/service, EFS filesystem and mount targets, security groups, IAM roles, CloudWatch logs, and Secrets Manager entry for `ANTHROPIC_API_KEY`; built the backend image in CodeBuild because local Docker became unhealthy after a failed large build; ran one-off ECS ingest against the official corpus and started the backend service.
+- Changes made: Added `buildspec.backend.yml`; updated `Dockerfile.backend` to install CPU PyTorch first; added a compatibility import in `knowledge_ops.py` for modern `langchain_text_splitters`.
+- Risks / open questions: The backend is exposed directly on ECS task public IP/port `8000` when running via security group `0.0.0.0/0`, which is acceptable only for a short demo; there is no ALB, HTTPS, auth, or stable DNS yet; local Docker Desktop still needs repair/restart outside this repo.
+- Next agent: The ECS service is intentionally scaled to `0` when idle. Run `./scripts/aws_backend.sh start` to get a fresh backend URL for Streamlit or Next.js testing, and `./scripts/aws_backend.sh stop` when done.
+
+### 2026-05-30 - Data Footprint Cleanup
+
+- Context: The repo needed a space-saving cleanup, and the existing docs already identified `Data/SIX_Hack_Zurich-main/` as the canonical official corpus while warning that the top-level `Data/` copies were legacy.
+- Actions: Re-read `README.md`, checked repo state and recent history, compared top-level `Data/` files against the canonical nested corpus byte-for-byte, removed only the identical top-level duplicates plus local `.DS_Store` files, and updated the durable repo-layout notes in `README.md`.
+- Changes made: Deleted tracked duplicate files from top-level `Data/` for a savings of about 47.84 MiB; preserved the canonical `Data/SIX_Hack_Zurich-main/` corpus; updated `README.md` so it no longer claims the duplicate top-level corpus still exists.
+- Risks / open questions: `.git/.DS_Store` remains because sandbox permissions blocked its removal, but it is tiny and unrelated to project content; deleting the tracked duplicates is a real branch change, so any teammate who still references the old top-level paths must switch to `Data/SIX_Hack_Zurich-main/`.
+- Next agent: If you touch ingestion or docs next, keep using `Data/SIX_Hack_Zurich-main/` as the source of truth and do not restore top-level duplicate corpus files.
+
+### 2026-05-30 - AWS Backend Boundary For GraphRAG
+
+- Context: The team chose the backend-API path for testing the local GraphRAG model through Streamlit while preparing for AWS deployment.
+- Actions: Created the `codex/aws-backend-graphrag` branch, added test coverage for backend client/config behavior, introduced a FastAPI wrapper, added Streamlit backend-client mode, made runtime artifact paths environment-configurable, and updated deployment/docs.
+- Changes made: Added `backend/api.py`, `api_client.py`, `Dockerfile.backend`, `.dockerignore`, and tests; updated `app.py`, `graph_engine.py`, `knowledge_ops.py`, `requirements.txt`, `.gitignore`, `README.md`, and `DEPLOY_AWS.md`.
+- Risks / open questions: FastAPI and LangChain runtime dependencies are not installed in this local sandbox, so backend server smoke tests were not run here; rotate the AWS credentials pasted into chat before any deployment; prototype governance gaps still remain.
+- Next agent: Install requirements in a virtualenv, run `python ingest.py`, start `uvicorn backend.api:app --host 0.0.0.0 --port 8000`, and test Streamlit with `COMPANY_BRAIN_API_URL=http://localhost:8000`.
+
+### 2026-05-30 - Post-Merge Top-Level Cleanup
+
+- Context: Pulled `feature/tier1-graphrag` after other developers had merge issues and re-read the full top-level code and doc surface to check whether the branch docs still matched the actual branch contents.
+- Actions: Pulled the branch, reviewed `README.md`, `AGENTS.md`, `DEPLOY_AWS.md`, `app.py`, `rag_engine.py`, `ingest.py`, `graph_engine.py`, `knowledge_ops.py`, `.gitignore`, and the tracked data/research layout, then cleaned the top-level docs without changing implementation behavior.
+- Changes made: `README.md` now reflects the actual GraphRAG branch file set, distinguishes canonical official corpus files from branch-local top-level `Data/*` additions, and records the current lowercase-`data/` portability caveat; `DEPLOY_AWS.md` now states that its instructions are branch notes rather than a fully validated clean-room deploy recipe and includes the missing `knowledge_ops.py` role.
+- Risks / open questions: The branch docs are cleaner, but the underlying GraphRAG implementation still expects lowercase `data/` while the tracked corpus is under `Data/`, so deploy/setup portability remains unresolved.
+- Next agent: If you touch ingest, deploy, or branch cleanup next, fix the corpus-path portability issue before expanding GraphRAG behavior or AWS automation further.
+
 ### 2026-05-30 - README / AGENTS Cleanup And Consolidation
 
 - Context: The top-level docs had started to accumulate overlapping review notes and path clarifications, which made the repo harder to scan quickly.

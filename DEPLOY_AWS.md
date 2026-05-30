@@ -1,26 +1,46 @@
 # Deploy Company Brain (GraphRAG) on AWS
 
-This branch adds **Tier 1 GraphRAG**: hybrid retrieval (vector + knowledge graph) on top of the existing Streamlit RAG app.
+This branch adds **Tier 1 GraphRAG** behind a FastAPI backend. Streamlit remains the demo UI and can either call the backend over HTTP or run the GraphRAG code in-process for quick local testing.
+
+## Current Status
+
+These notes describe the branch's intended deployment shape, not a fully validated clean-room deployment recipe. The default AWS path is **ECS Fargate + EFS** so generated GraphRAG artifacts survive task restarts.
+
+Current branch caveats:
+
+- the GraphRAG code path defaults to lowercase `data/`, but can be pointed elsewhere with `COMPANY_BRAIN_DATA_DIR`,
+- the canonical official challenge corpus is `Data/SIX_Hack_Zurich-main/`,
+- top-level `Data/*` files are intentionally not used; the canonical corpus is the nested official folder.
+
+If you are testing on a clean Linux or AWS environment, set the corpus/artifact environment variables explicitly before treating the deploy flow below as production-ready.
 
 ## What's new on this branch
 
 | File | Purpose |
 |------|---------|
 | `graph_engine.py` | Domain ontology, graph build/load, entity detection, 1-hop expansion |
+| `knowledge_ops.py` | Shared extraction, chunking, incremental ingest, and graph-update utilities |
+| `backend/api.py` | FastAPI backend exposing health, query, and ingest endpoints |
+| `api_client.py` | Streamlit HTTP client helpers for backend mode |
+| `Dockerfile.backend` | Backend container image definition for ECS/Fargate |
+| `buildspec.backend.yml` | AWS CodeBuild recipe for building/pushing the backend image |
+| `scripts/aws_backend.sh` | Helper for backend status/start/stop/url/health |
+| `frontend-next/` | Next.js/Vercel migration starter that proxies to the backend |
 | `graph.json` | Generated at ingest (gitignored); rebuild with `python ingest.py` |
 | `rag_engine.py` | `hybrid_retrieve()` merges vector seed + graph-linked chunks |
-| `app.py` | Shows graph path, cross-document files, GraphRAG badge in UI |
+| `app.py` | Streamlit UI; calls backend when `COMPANY_BRAIN_API_URL` is set |
 
 ## Prerequisites
 
 - Python 3.9+
 - `ANTHROPIC_API_KEY` in `.env`
 - ~2 GB RAM (local embedding model + Chroma)
+- Rotate any access keys that were pasted into chat or docs before deploying.
 
 ## Local setup (verify before AWS)
 
 ```bash
-git checkout feature/tier1-graphrag
+git checkout codex/aws-backend-graphrag
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
@@ -29,8 +49,29 @@ cp .env.example .env
 # edit .env → ANTHROPIC_API_KEY=sk-ant-...
 
 python ingest.py          # builds chroma_db/ + graph.json (~5–10 min first run)
-streamlit run app.py      # http://localhost:8501
+uvicorn backend.api:app --host 0.0.0.0 --port 8000
 ```
+
+In another terminal:
+
+```bash
+source .venv/bin/activate
+COMPANY_BRAIN_API_URL=http://localhost:8000 streamlit run app.py
+```
+
+## AWS Developer Commands
+
+The deployed backend is intentionally scaled to zero when nobody is testing.
+
+```bash
+./scripts/aws_backend.sh status
+./scripts/aws_backend.sh start
+./scripts/aws_backend.sh url
+./scripts/aws_backend.sh health
+./scripts/aws_backend.sh stop
+```
+
+Use `start` before a demo or remote frontend test, then `stop` when done. The public task IP changes across restarts.
 
 **Demo questions that show GraphRAG vs vector-only:**
 
@@ -38,59 +79,58 @@ streamlit run app.py      # http://localhost:8501
 - *How do FATCA and the tax navigator relate?*
 - *What is FATCA?* → control (vector-only is fine)
 
-## Option A: AWS App Runner (simplest for Streamlit)
+## Backend API
 
-1. **Dockerfile** (add to repo root):
+| Method | Path | Purpose |
+|--------|------|---------|
+| `GET` | `/health` | Returns artifact paths and whether `data`, `chroma_db`, and `graph.json` exist |
+| `POST` | `/query` | Body: `{"question": "..."}`. Returns the existing GraphRAG answer shape |
+| `POST` | `/ingest` | Multipart `file` plus optional `role_owner`. Adds the file to Chroma and graph |
 
-```dockerfile
-FROM python:3.11-slim
-WORKDIR /app
-RUN apt-get update && apt-get install -y --no-install-recommends build-essential && rm -rf /var/lib/apt/lists/*
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
-COPY . .
-# Pre-build index at image build time (optional; increases image size but faster cold start)
-# RUN python ingest.py
-EXPOSE 8501
-CMD ["streamlit", "run", "app.py", "--server.port=8501", "--server.address=0.0.0.0", "--server.headless=true"]
-```
+## AWS ECS Fargate + EFS
 
-2. Push image to **ECR**, create **App Runner** service from the image.
-3. Set env var `ANTHROPIC_API_KEY` in App Runner configuration.
-4. On first deploy, either:
-   - Run `ingest.py` in the Dockerfile (bakes `chroma_db/` + `graph.json` into image), or
-   - Mount **EFS** for persistent `chroma_db/` and run ingest once via ECS task / startup script.
+1. Build and push `Dockerfile.backend` to ECR. The current branch uses AWS CodeBuild with `buildspec.backend.yml` because local Docker may be unavailable or unhealthy.
+2. Create an EFS filesystem and mount it into the task, for example at `/mnt/company-brain`.
+3. Configure the ECS task environment:
+   - `ANTHROPIC_API_KEY` from AWS Secrets Manager or task secrets.
+   - `COMPANY_BRAIN_DATA_DIR=/mnt/company-brain/data`
+   - `COMPANY_BRAIN_CHROMA_DIR=/mnt/company-brain/chroma_db`
+   - `COMPANY_BRAIN_GRAPH_PATH=/mnt/company-brain/graph.json`
+4. Run ingestion once against the mounted paths. This can be a one-off ECS task using the same image with command `python ingest.py`, or a local run that syncs artifacts to EFS.
+5. Run the backend service on port `8000` behind an internal or restricted load balancer.
+6. Run Streamlit locally or separately with `COMPANY_BRAIN_API_URL` pointing at the backend URL.
+7. For Next.js/Vercel, use `frontend-next/` as the Vercel project root and set `COMPANY_BRAIN_API_URL` in Vercel environment variables.
 
-**Note:** Ingest downloads `sentence-transformers/all-MiniLM-L6-v2` and embeds ~5k chunks — do this at **build time** or on a persistent volume, not on every container restart.
+**Note:** Ingest downloads `sentence-transformers/all-MiniLM-L6-v2` and embeds the corpus. Do this once against persistent storage, not on every container restart.
 
-## Option B: EC2 (quick hackathon path)
+## EC2 fallback
 
 ```bash
 # On Ubuntu EC2 (t3.medium or larger)
 sudo apt update && sudo apt install -y python3-venv git
 git clone https://github.com/koenigamir/the-company-brain.git
 cd the-company-brain
-git checkout feature/tier1-graphrag
+git checkout codex/aws-backend-graphrag
 
 python3 -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
 echo "ANTHROPIC_API_KEY=..." > .env
 python ingest.py
 
-nohup .venv/bin/streamlit run app.py --server.port 8501 --server.address 0.0.0.0 &
+nohup .venv/bin/uvicorn backend.api:app --host 0.0.0.0 --port 8000 &
 ```
 
-Open security group port **8501** (or put **nginx** + HTTPS in front).
-
-## Option C: ECS Fargate
-
-Same Dockerfile as App Runner. Store secrets in **AWS Secrets Manager** (`ANTHROPIC_API_KEY`). Use EFS mount for `/app/chroma_db` and `/app/graph.json` so re-ingest isn't required on every task restart.
+Open only the required backend port to trusted clients, or put nginx / ALB + HTTPS in front.
 
 ## Environment variables
 
 | Variable | Required | Description |
 |----------|----------|-------------|
 | `ANTHROPIC_API_KEY` | Yes | Claude synthesis (`claude-sonnet-4-6`) |
+| `COMPANY_BRAIN_API_URL` | Streamlit backend mode only | Backend base URL, e.g. `http://localhost:8000` |
+| `COMPANY_BRAIN_DATA_DIR` | No | Upload/corpus directory; defaults to `data` |
+| `COMPANY_BRAIN_CHROMA_DIR` | No | Chroma vector store directory; defaults to `chroma_db` |
+| `COMPANY_BRAIN_GRAPH_PATH` | No | Knowledge graph JSON path; defaults to `graph.json` |
 
 Embeddings are **local** (HuggingFace `all-MiniLM-L6-v2`) — no extra API key.
 
@@ -98,6 +138,7 @@ Embeddings are **local** (HuggingFace `all-MiniLM-L6-v2`) — no extra API key.
 
 - `chroma_db/` — vector store
 - `graph.json` — knowledge graph (rebuilt by `ingest.py`)
+- `data/` — local uploaded files when using incremental ingest
 - `.env` — secrets
 
 Both are in `.gitignore`. Teammates must run `python ingest.py` after clone unless you bake them into a Docker image.
@@ -106,7 +147,8 @@ Both are in `.gitignore`. Teammates must run `python ingest.py` after clone unle
 
 ```
 ingest.py  →  chroma_db/ (vectors)  +  graph.json (entity ↔ document links)
-app.py     →  rag_engine.query_brain()
+backend/api.py → rag_engine.query_brain() / rag_engine.add_file_to_brain()
+app.py     →  backend HTTP API when COMPANY_BRAIN_API_URL is set
 rag_engine →  vector seed (k=5) + graph expansion (k=6 from new docs) → Claude
 graph_engine → detect_entities(question) → expand 1 hop → documents_for_entities()
 ```
@@ -116,6 +158,9 @@ graph_engine → detect_entities(question) → expand 1 hop → documents_for_en
 | Issue | Fix |
 |-------|-----|
 | `graph.json` not found | Run `python ingest.py` |
+| Streamlit still runs locally | Check that `COMPANY_BRAIN_API_URL` is exported in the Streamlit shell |
+| `/health` shows missing Chroma | Run ingest against the same `COMPANY_BRAIN_CHROMA_DIR` used by the backend |
 | Empty graph panel | Question has no known entities (SFDR, FATCA, MiFID, EET, EMT, …) |
 | Slow first query | Embedding model cold load; subsequent queries faster |
 | OOM on small instance | Use `t3.medium`+ or pre-bake index in Docker build |
+| Public IP stopped working | The ECS task restarted or service is scaled to zero; run `./scripts/aws_backend.sh start` and use the new printed URL |

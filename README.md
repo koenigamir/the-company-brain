@@ -24,7 +24,10 @@ Follow this sequence every time:
 - `AGENTS.md` is not the source of truth. It is the rolling progress log, discovery log, and handoff log for agents.
 - If `README.md` and `AGENTS.md` conflict, `README.md` wins.
 - Supporting context files currently include:
-  - `app.py`, `rag_engine.py`, `ingest.py`, and `requirements.txt` for the current prototype code path
+  - `app.py`, `api_client.py`, `backend/api.py`, `rag_engine.py`, `ingest.py`, `graph_engine.py`, `knowledge_ops.py`, and `requirements.txt` for the current branch code path
+  - `DEPLOY_AWS.md` for branch-specific GraphRAG deployment notes
+  - `docs/aws_backend_runbook.md`, `docs/developer_environment.md`, and `docs/next_vercel_migration.md` for the current developer handoff
+  - `frontend-next/` for the Vercel / Next.js migration starter
   - `research/group_idea_research.md` for brainstorming output and idea exploration
   - `research/step_by_step_procedure.md` for current execution thinking and work split
   - `research/2026-05-30_multimodal_ingestion_model_research.md` for ingestion-model and retrieval-stack research
@@ -53,7 +56,8 @@ While working, every agent must follow these rules:
 - Do not invent missing product, architecture, setup, or implementation details.
 - Verify actual content of data files; do not trust extensions or filenames.
 - Treat the `Data/` directory as source material, not as automatically clean or perfectly curated input.
-- Treat `Data/SIX_Hack_Zurich-main/` as the canonical official corpus for new work and scripts. The duplicated top-level files directly under `Data/` are not the canonical source.
+- Treat `Data/SIX_Hack_Zurich-main/` as the canonical official corpus for new work and scripts.
+- Treat top-level `Data/*` files as legacy unless a task explicitly adds a new branch-local fixture. The canonical corpus lives under `Data/SIX_Hack_Zurich-main/`.
 - Keep `AGENTS.md` concise by consolidating superseded or overlapping notes instead of stacking near-duplicate entries about the same review or discovery.
 - Avoid committing operating-system artifacts such as `.DS_Store`.
 - Prefer updating existing top-level docs over creating parallel or conflicting guidance.
@@ -162,7 +166,11 @@ The official given challenge material now lives under:
 
 This data pack is a core source of context for the project.
 
-The repository also currently contains duplicated copies of those files directly under `Data/`. Those top-level duplicates are legacy copies and should not be treated as the canonical source for new work, scripts, or documentation.
+The branch also contains one top-level local-ingestion addition that is not part of the official nested pack:
+
+- `Data/SIX_Hack_Zurich-main/six-global-indices-factsheet-en.pdf`
+
+Do not recreate top-level duplicate copies of the canonical nested corpus unless there is a specific, documented reason.
 
 ### Important Caveats
 
@@ -178,6 +186,7 @@ Agents must assume the data pack is heterogeneous and imperfect:
 
 Agents should consult these when relevant:
 
+- `DEPLOY_AWS.md` for the current branch's GraphRAG deployment notes and caveats
 - `research/group_idea_research.md` for idea generation and early solution directions
 - `research/step_by_step_procedure.md` for current process thinking and task decomposition
 
@@ -206,13 +215,27 @@ Agents should treat these as part of the real-world problem context even when th
 - Use branches and pull requests for non-trivial work unless explicitly directed otherwise.
 - Do not create conflicting guidance documents when an update to `README.md` would solve the problem.
 - Do not commit `.DS_Store` or similar operating-system artifacts.
+- Do not commit generated runtime artifacts such as `.env`, `.env.local`, `data/`, `chroma_db/`, `.next/`, `node_modules/`, or `graph.json`.
 
 ## Current Repo Snapshot
 
-- `app.py`, `rag_engine.py`, and `ingest.py` are the current prototype entry points.
+- `app.py`, `backend/api.py`, `api_client.py`, `rag_engine.py`, `ingest.py`, `graph_engine.py`, and `knowledge_ops.py` are the current branch entry points and helper modules.
 - The current product code is still a prototype and must not be mistaken for the final architecture.
+- This branch adds Tier 1 GraphRAG retrieval, incremental upload utilities, a FastAPI backend boundary, Streamlit API-client mode, AWS runbook scripts, a Next.js/Vercel migration starter, and `DEPLOY_AWS.md`.
 - `research/` holds generated planning, research, and analysis markdown.
-- `Data/SIX_Hack_Zurich-main/` is the canonical official challenge corpus; duplicated top-level `Data/*` files are legacy copies.
+- `Data/SIX_Hack_Zurich-main/` is the canonical official challenge corpus.
+- Top-level `Data/*` is intentionally empty after cleanup; keep the canonical nested corpus under `Data/SIX_Hack_Zurich-main/` and only add top-level fixtures when a task genuinely needs them.
+- The GraphRAG code path defaults to lowercase `data/` for uploaded files, `chroma_db/` for vectors, and `graph.json` for the graph; AWS or clean-room runs should set `COMPANY_BRAIN_DATA_DIR`, `COMPANY_BRAIN_CHROMA_DIR`, and `COMPANY_BRAIN_GRAPH_PATH` explicitly.
+
+## Current Runtime Contract
+
+- Local in-process demo: run `python ingest.py`, then `streamlit run app.py`.
+- Backend demo: run `uvicorn backend.api:app --host 0.0.0.0 --port 8000`, then run Streamlit with `COMPANY_BRAIN_API_URL=http://localhost:8000`.
+- Backend endpoints are `GET /health`, `POST /query`, and `POST /ingest`.
+- Required secret for answer synthesis is `ANTHROPIC_API_KEY`.
+- AWS deployment target for this branch is ECS Fargate with EFS-mounted GraphRAG artifacts, as documented in `DEPLOY_AWS.md`.
+- AWS backend operations are wrapped by `./scripts/aws_backend.sh`; keep desired count at `0` when nobody is testing.
+- Next.js/Vercel migration work starts in `frontend-next/`; set Vercel project root to `frontend-next` and configure `COMPANY_BRAIN_API_URL` as a server-side environment variable.
 
 ## What To Update When Facts Change
 
@@ -238,11 +261,9 @@ Update `AGENTS.md` when any of these happen:
 
 These items are still intentionally open and must not be invented:
 
-- final application architecture,
-- final tech stack,
-- local setup procedure,
-- environment variable contract,
-- build / run / test commands,
-- deployment and infrastructure design.
+- final production application architecture beyond this prototype branch,
+- final production governance and access-control model,
+- whether Chroma-on-EFS remains sufficient after the demo or should be replaced by a managed retrieval backend,
+- whether ingestion should continue to use local files or move to an object-storage workflow.
 
 The challenge explicitly allows freedom in technology choice, so these should only be documented once they are actually decided.

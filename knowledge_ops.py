@@ -10,15 +10,18 @@ import fitz  # PyMuPDF
 from docx import Document as DocxDocument
 from openpyxl import load_workbook
 
-from langchain.text_splitter import RecursiveCharacterTextSplitter
+try:
+    from langchain.text_splitter import RecursiveCharacterTextSplitter
+except ModuleNotFoundError:
+    from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_core.documents import Document
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_chroma import Chroma
 
 import graph_engine
 
-DATA_DIR = "data"
-CHROMA_DIR = "chroma_db"
+DATA_DIR = os.getenv("COMPANY_BRAIN_DATA_DIR", "data")
+CHROMA_DIR = os.getenv("COMPANY_BRAIN_CHROMA_DIR", "chroma_db")
 COLLECTION_NAME = "company_brain"
 EMBED_MODEL = "sentence-transformers/all-MiniLM-L6-v2"
 CHUNK_SIZE = 500

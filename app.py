@@ -1,8 +1,42 @@
+from __future__ import annotations
+
+import os
+
 import streamlit as st
-from rag_engine import query_brain, add_file_to_brain
-import knowledge_ops
+
+import api_client
 
 st.set_page_config(page_title="Company Brain", page_icon="brain", layout="wide")
+
+API_URL = os.getenv("COMPANY_BRAIN_API_URL")
+ROLE_OWNERS = ["ESG Compliance", "Master Data Ops", "Tax Team"]
+
+
+def query_company_brain(question: str) -> dict:
+    if API_URL:
+        return api_client.query_brain_remote(API_URL, question)
+
+    from rag_engine import query_brain
+
+    return query_brain(question)
+
+
+def add_uploaded_file_to_brain(
+    file_bytes: bytes,
+    filename: str,
+    role_owner: str | None = None,
+) -> dict:
+    if API_URL:
+        return api_client.add_file_to_brain_remote(
+            API_URL,
+            file_bytes,
+            filename,
+            role_owner=role_owner,
+        )
+
+    from rag_engine import add_file_to_brain
+
+    return add_file_to_brain(file_bytes, filename, role_owner=role_owner)
 
 
 def render_graph_panel(graph: dict):
@@ -45,6 +79,11 @@ def render_gap_routing(gap: dict):
 
 # ---------- Sidebar ----------
 st.sidebar.title("Company Brain")
+if API_URL:
+    st.sidebar.caption(f"Backend API: `{API_URL}`")
+else:
+    st.sidebar.caption("Backend API: local in-process mode")
+
 role = st.sidebar.selectbox(
     "Simulate Role:",
     ["Standard Employee", "ESG Compliance Officer"],
@@ -61,14 +100,18 @@ uploaded = st.sidebar.file_uploader(
 )
 upload_role = st.sidebar.selectbox(
     "Assign owner (optional)",
-    ["Auto-detect from filename"] + knowledge_ops.ROLE_OWNERS,
+    ["Auto-detect from filename"] + ROLE_OWNERS,
 )
 
 if uploaded is not None:
     if st.sidebar.button("Ingest into Company Brain", type="primary"):
         with st.spinner(f"Ingesting {uploaded.name}..."):
             owner = None if upload_role == "Auto-detect from filename" else upload_role
-            result = add_file_to_brain(uploaded.getvalue(), uploaded.name, role_owner=owner)
+            result = add_uploaded_file_to_brain(
+                uploaded.getvalue(),
+                uploaded.name,
+                role_owner=owner,
+            )
         if result.get("ok"):
             st.sidebar.success(
                 f"Added **{result['chunks']}** chunks from `{result['filename']}` "
@@ -92,7 +135,7 @@ query = st.text_input(
 
 if query:
     with st.spinner("Synthesizing canonical answer..."):
-        result = query_brain(query)
+        result = query_company_brain(query)
 
     confidence = result.get("confidence", "Low")
 
