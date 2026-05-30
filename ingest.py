@@ -7,7 +7,7 @@ from docx import Document as DocxDocument
 from openpyxl import load_workbook
 from dotenv import load_dotenv
 
-from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_core.documents import Document
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_chroma import Chroma
@@ -16,7 +16,7 @@ import graph_engine
 
 load_dotenv()
 
-DATA_DIR = "data"
+DATA_DIR = "Data/SIX_Hack_Zurich-main"
 CHROMA_DIR = "chroma_db"
 COLLECTION_NAME = "company_brain"
 EMBED_MODEL = "sentence-transformers/all-MiniLM-L6-v2"

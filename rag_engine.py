@@ -1,20 +1,24 @@
+import os
 from typing import List
 from dotenv import load_dotenv
 from pydantic import BaseModel, Field
 
-from langchain_anthropic import ChatAnthropic
+from langchain_aws import ChatBedrock
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_chroma import Chroma
 from langchain_core.prompts import ChatPromptTemplate
 
 import graph_engine
 
+print("--- RAG ENGINE (AWS) LOADED ---")
+
 load_dotenv()
 
 CHROMA_DIR = "chroma_db"
 COLLECTION_NAME = "company_brain"
 EMBED_MODEL = "sentence-transformers/all-MiniLM-L6-v2"
-LLM_MODEL = "claude-sonnet-4-6"
+BEDROCK_MODEL_ID = "eu.amazon.nova-lite-v1:0"
+REGION = os.getenv("AWS_REGION", "eu-central-1")
 
 
 class WikiPage(BaseModel):
@@ -45,9 +49,22 @@ Strict rules:
   summary brief (one sentence stating the information is not available).
 - 'sources' must list the distinct source_file values you actually used.
 - 'role_owner' must come from the most relevant chunk's metadata.
+
+Target Output Quality:
+- Your goal is to produce a HIGHLY DETAILED, PROFESSIONAL, and LONG encyclopedic entry.
+- Use Markdown headers (###), bold text, and tables to organize information.
+- Provide in-depth explanations of concepts (e.g., explaining exactly what a template is or how a regulation works based on the text).
+- Include specific field names, version numbers, and regulatory references found in the context.
+- Structure the response with an Introduction, Key Components/Sections, and a 'How it Supports/Relates to [Regulation]' section.
+- Aim for a comprehensive length (300-600 words) if the context allows.
 """
 
-_llm = ChatAnthropic(model=LLM_MODEL, temperature=0, max_tokens=3000)
+# Use Bedrock instead of Anthropic API
+_llm = ChatBedrock(
+    model_id=BEDROCK_MODEL_ID,
+    region_name=REGION,
+    model_kwargs={"temperature": 0},
+)
 _structured_llm = _llm.with_structured_output(WikiPage)
 
 _prompt = ChatPromptTemplate.from_messages(
@@ -159,9 +176,12 @@ def _format_context(docs) -> str:
 
 def query_brain(question: str) -> dict:
     """Retrieve, synthesize, and return a structured wiki page + raw metadata."""
+    print(f"QUERY RECEIVED: {question}")
     docs, graph_debug = hybrid_retrieve(question)
+    print(f"RETRIEVED {len(docs)} DOCS")
 
     if not docs:
+        print("CONFIDENCE: LOW (No docs)")
         return {
             "title": "No Results",
             "summary": "No indexed knowledge was found for this query.",
@@ -176,6 +196,7 @@ def query_brain(question: str) -> dict:
     result: WikiPage = (_prompt | _structured_llm).invoke(
         {"question": question, "context": context}
     )
+    print(f"LLM CONFIDENCE: {result.confidence}")
 
     last_updated_dates = sorted(
         {d.metadata.get("last_updated") for d in docs if d.metadata.get("last_updated")}
