@@ -24,7 +24,7 @@ Follow this sequence every time:
 - `AGENTS.md` is not the source of truth. It is the rolling progress log, discovery log, and handoff log for agents.
 - If `README.md` and `AGENTS.md` conflict, `README.md` wins.
 - Supporting context files currently include:
-  - `group_idea_research.md` for brainstorming output and idea exploration
+  - `research/group_idea_research.md` for brainstorming output and idea exploration
   - `research/step_by_step_procedure.md` for current execution thinking and work split
   - `Data/SIX_Hack_Zurich-main/` for the canonical official given challenge material
 - If a new durable rule, workflow, or top-level fact is discovered, update `README.md` first and then note the change briefly in `AGENTS.md`.
@@ -175,7 +175,7 @@ Agents must assume the data pack is heterogeneous and imperfect:
 
 Agents should consult these when relevant:
 
-- `group_idea_research.md` for idea generation and early solution directions
+- `research/group_idea_research.md` for idea generation and early solution directions
 - `research/step_by_step_procedure.md` for current process thinking and task decomposition
 
 ### Likely Knowledge Systems In Scope
@@ -213,6 +213,7 @@ Update `README.md` when any of these change:
 - durable collaboration rules,
 - setup or runtime assumptions,
 - repo layout or top-level file roles,
+- location of core context folders such as `research/` or `Data/`,
 - major project context that future agents must know.
 
 Update `AGENTS.md` when any of these happen:

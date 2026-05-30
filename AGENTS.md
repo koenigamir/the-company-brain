@@ -29,12 +29,20 @@ Use this structure for new entries:
 
 ## Current Log
 
+### 2026-05-30 - Research Folder Created
+
+- Context: The generated research markdown files belonged together and should no longer live in the repo root.
+- Actions: Created `research/`, moved the existing research markdown files into it, and updated canonical README references.
+- Changes made: `group_idea_research.md` moved to `research/group_idea_research.md`; `step_by_step_procedure.md` moved to `research/step_by_step_procedure.md`.
+- Risks / open questions: Any stale references to the old root-level paths should be corrected when encountered.
+- Next agent: Look in `research/` first for generated planning, research, and analysis markdown files.
+
 ### 2026-05-30 - Multimodal Ingestion Model Research
 
 - Context: Read the canonical repo docs first, then researched high-quality multimodal ingestion models and architectures that could normalize mixed enterprise content into the structure already envisioned for the Company Brain.
-- Actions: Read `README.md`, checked git state and recent history, reviewed `app.py`, `rag_engine.py`, `ingest.py`, `requirements.txt`, `group_idea_research.md`, and `research/step_by_step_procedure.md`, verified sample file contents and mislabeled extensions, and researched AWS, Bedrock vs SageMaker, Docling, Unstructured, MinerU, DeepSeek-OCR-2, Qwen3-VL, Whisper/WhisperX/pyannote, Mistral OCR, LlamaParse, multimodal retrieval models, retrieval backends, and relevant GitHub implementations.
+- Actions: Read `README.md`, checked git state and recent history, reviewed `app.py`, `rag_engine.py`, `ingest.py`, `requirements.txt`, `research/group_idea_research.md`, and `research/step_by_step_procedure.md`, verified sample file contents and mislabeled extensions, and researched AWS, Bedrock vs SageMaker, Docling, Unstructured, MinerU, DeepSeek-OCR-2, Qwen3-VL, Whisper/WhisperX/pyannote, Mistral OCR, LlamaParse, multimodal retrieval models, retrieval backends, and relevant GitHub implementations.
 - Changes made: Added `research/2026-05-30_multimodal_ingestion_model_research.md` and expanded it with a broader option landscape, AWS-credit-aware recommendations for a `100 CHF` two-day budget, additional managed-parser options, and retrieval backend alternatives beyond the original open-source-on-AWS path.
-- Risks / open questions: The live prototype still uses random role/freshness metadata and vector-only retrieval, and still lacks the normalized `data/normalized/*` artifacts described in planning docs; the best next implementation path still depends on whether the team prioritizes cheapest two-day delivery, AWS-native services, or open-source model hosting; `README.md`, `group_idea_research.md`, and the `step_by_step_procedure.md` move already had uncommitted changes and were not modified here.
+- Risks / open questions: The live prototype still uses random role/freshness metadata and vector-only retrieval, and still lacks the normalized `data/normalized/*` artifacts described in planning docs; the best next implementation path still depends on whether the team prioritizes cheapest two-day delivery, AWS-native services, or open-source model hosting; `README.md`, `research/group_idea_research.md`, and the `research/step_by_step_procedure.md` move already had uncommitted changes and were not modified here.
 - Next agent: If implementation starts, decide first between the low-cost local-first path and the open-source-on-AWS path, then refactor `ingest.py` into modality-aware normalization, emit the shared normalized JSON contracts, and upgrade embeddings/reranking before changing answer synthesis or UI behavior.
 
 ### 2026-05-30 - README Path And Corpus Clarification
@@ -50,7 +58,7 @@ Use this structure for new entries:
 - Context: Reviewed the newly added Streamlit/LangChain backend after the RAG prototype commit to look for overlap and cleanup risks in a shared 4-coder workflow.
 - Actions: Read `app.py`, `rag_engine.py`, `ingest.py`, `requirements.txt`, git history, repo state, and current planning-doc diffs.
 - Changes made: No backend code changes; only this handoff entry was added.
-- Risks / open questions: `ingest.py` uses `DATA_DIR = "data"` while the repo currently has `Data/`; the latest commit duplicated the official files at `Data/` and `Data/SIX_Hack_Zurich-main/`; retrieval expects `chroma_db/` to exist but it is gitignored and not present; role/freshness metadata is synthetic/random; Streamlit role selection is display-only and not enforced in retrieval; `group_idea_research.md` and `step_by_step_procedure.md` already have uncommitted edits from another agent.
+- Risks / open questions: `ingest.py` uses `DATA_DIR = "data"` while the repo currently has `Data/`; the latest commit duplicated the official files at `Data/` and `Data/SIX_Hack_Zurich-main/`; retrieval expects `chroma_db/` to exist but it is gitignored and not present; role/freshness metadata is synthetic/random; Streamlit role selection is display-only and not enforced in retrieval; `research/group_idea_research.md` and `research/step_by_step_procedure.md` already have uncommitted edits from another agent.
 - Next agent: Decide whether the backend should be repaired in-place for the current Streamlit demo or replaced by the planned `backend/` API structure before doing larger cleanup.
 
 ### 2026-05-30 - README / AGENTS Role Split
