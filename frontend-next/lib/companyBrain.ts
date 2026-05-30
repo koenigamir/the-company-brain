@@ -28,13 +28,14 @@ async function fetchWithTimeout(
 
 export async function queryCompanyBrain(
   question: string,
+  history: Array<Record<string, string>> = [],
 ): Promise<CompanyBrainAnswer> {
   const response = await fetchWithTimeout(`${backendBaseUrl()}/query`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ question }),
+    body: JSON.stringify({ question, history }),
   });
 
   if (!response.ok) {

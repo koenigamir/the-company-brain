@@ -5,20 +5,27 @@ The backend is already separated from Streamlit. The migration is now a frontend
 ## Current Backend Contract
 
 - `GET /health`
-- `POST /query` with `{"question": "..."}`
+- `POST /query` with `{"question": "...", "history": []}`
 - `POST /ingest` with multipart `file` and optional `role_owner`
+- `GET /roles`
+- `GET /documents`
+- `POST /gap-ticket`
 
 Answers return the existing GraphRAG shape:
 
 ```text
 title
-summary
+short_answer
+detailed_answer
 confidence
+used_llm_knowledge
 sources
 role_owner
 last_updated_dates
 graph
 gap_routing
+missing_topics
+gap_ticket_draft
 ```
 
 ## Target Vercel Structure
@@ -37,8 +44,8 @@ The browser calls Next.js API routes. Next.js server routes call the AWS backend
 ## Migration Steps
 
 1. Rebuild the Streamlit query surface in `frontend-next/app/page.tsx`.
-2. Preserve the existing answer display contract: confidence, sources, owner, dates, graph debug panel, and gap routing.
-3. Add upload/ingest once query is stable.
+2. Preserve the existing answer display contract: confidence, sources, owner, dates, graph debug panel, general-knowledge flag, missing topics, and gap routing.
+3. Add upload/ingest for documents, images, audio, and video once query is stable.
 4. Deploy to Vercel with project root `frontend-next`.
 5. Point Vercel env var `COMPANY_BRAIN_API_URL` at the AWS backend.
 6. Replace the direct ECS public IP with ALB + HTTPS before sharing outside the team.

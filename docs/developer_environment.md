@@ -4,15 +4,17 @@ Use this as the handoff for the four developers working on the AWS backend, Stre
 
 ## What Exists Now
 
-The current production-like backend is FastAPI on ECS Fargate. It wraps the existing GraphRAG runtime:
+The current production-like backend is FastAPI on ECS Fargate. It wraps the current GraphRAG runtime:
 
 ```text
 frontend client
   -> HTTP API
   -> FastAPI backend on ECS
-  -> Chroma vector store + graph.json on EFS
+  -> Chroma vector store + graph.json + localstore on EFS
   -> Claude Sonnet 4.6 through Anthropic
 ```
+
+The backend now supports document, image, audio, and video ingest. Images use Claude vision OCR/description; audio/video use local `faster-whisper` with optional cloud escalation. Roles, document ownership, and gap tickets persist to local JSON by default or Supabase when explicitly enabled.
 
 The backend service is normally stopped (`desired-count = 0`) unless somebody is testing.
 
@@ -34,6 +36,15 @@ Put only app secrets in `.env`, such as:
 
 ```text
 ANTHROPIC_API_KEY=...
+```
+
+For AWS-compatible local runs, the important runtime paths are:
+
+```text
+COMPANY_BRAIN_DATA_DIR=data
+COMPANY_BRAIN_CHROMA_DIR=chroma_db
+COMPANY_BRAIN_GRAPH_PATH=graph.json
+COMPANY_BRAIN_STORE_DIR=localstore
 ```
 
 Do not commit `.env`. AWS credentials should be configured through the local AWS profile `company-brain`, not through `.env`.
@@ -106,6 +117,6 @@ Run from repo root:
 
 ```bash
 python3 -m unittest discover -s tests
-PYTHONPYCACHEPREFIX=/tmp/company-brain-pycache python3 -m py_compile app.py api_client.py rag_engine.py graph_engine.py knowledge_ops.py ingest.py backend/api.py
+PYTHONPYCACHEPREFIX=/tmp/company-brain-pycache python3 -m py_compile app.py api_client.py rag_engine.py graph_engine.py knowledge_ops.py ingest.py backend/api.py store.py role_resolver.py media_ingest.py image_ingest.py
 rg -n "sk-ant-api|AKIA|AWS_SECRET_ACCESS_KEY|AWS_ACCESS_KEY_ID" --glob '!Data/**' --glob '!chroma_db/**' --glob '!data/**' --glob '!.env' --glob '!.venv/**' .
 ```

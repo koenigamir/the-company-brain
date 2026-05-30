@@ -20,6 +20,8 @@ export default function Home() {
     return answer?.graph?.used_graph ? "Graph context used" : "Vector context";
   }, [answer]);
 
+  const answerText = answer?.short_answer || answer?.summary || "";
+
   async function submitQuery(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setIsLoading(true);
@@ -97,7 +99,11 @@ export default function Home() {
                 </span>
               </div>
 
-              <div className="summary">{answer.summary}</div>
+              <div className="summary">{answerText}</div>
+
+              {answer.detailed_answer ? (
+                <div className="detailBlock">{answer.detailed_answer}</div>
+              ) : null}
 
               <dl className="metadata">
                 <div>
@@ -122,6 +128,19 @@ export default function Home() {
                       <li key={path}>{path}</li>
                     ))}
                   </ul>
+                </div>
+              ) : null}
+
+              {answer.gap_required && answer.gap_routing ? (
+                <div className="graphPanel">
+                  <h3>Knowledge gap routing</h3>
+                  <p>{answer.gap_routing.reason}</p>
+                  <p>
+                    Routed to:{" "}
+                    {(answer.gap_routing.routed_roles || [answer.gap_routing.routed_to])
+                      .filter(Boolean)
+                      .join(", ")}
+                  </p>
                 </div>
               ) : null}
             </article>

@@ -194,6 +194,15 @@ h3 {
   white-space: pre-wrap;
 }
 
+.detailBlock {
+  margin-top: 16px;
+  border-left: 3px solid #b9c6d6;
+  padding-left: 14px;
+  color: #39485a;
+  line-height: 1.6;
+  white-space: pre-wrap;
+}
+
 .metadata {
   display: grid;
   gap: 12px;

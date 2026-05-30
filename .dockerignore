@@ -7,6 +7,7 @@ __pycache__/
 chroma_db/
 graph.json
 data/
+localstore/
 streamlit.log
 streamlit.pid
 tunnel.log
