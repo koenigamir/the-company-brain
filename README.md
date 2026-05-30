@@ -166,7 +166,7 @@ The official given challenge material now lives under:
 
 This data pack is a core source of context for the project.
 
-The branch also contains one top-level local-ingestion addition that is not part of the official nested pack:
+The branch also contains one local-ingestion addition now kept inside the canonical nested corpus:
 
 - `Data/SIX_Hack_Zurich-main/six-global-indices-factsheet-en.pdf`
 

@@ -29,6 +29,14 @@ Use this structure for new entries:
 
 ## Current Log
 
+### 2026-05-30 - README And Agent Log Audit
+
+- Context: After the AWS/Next developer handoff was pushed, the docs needed a final consistency check.
+- Actions: Re-read the current README and AGENTS top entries, checked git state, and corrected stale README wording around the `six-global` PDF location.
+- Changes made: README now describes `Data/SIX_Hack_Zurich-main/six-global-indices-factsheet-en.pdf` as a nested canonical-corpus addition rather than a top-level file.
+- Risks / open questions: No new product risk found in this doc pass; existing open items remain backend auth/HTTPS/stable DNS, final Vercel setup, and production governance/access control.
+- Next agent: Treat README as current for the AWS backend, Streamlit API mode, and Next/Vercel starter handoff; use the latest AGENTS entries for operational context.
+
 ### 2026-05-30 - Frontend Verification Follow-Up
 
 - Context: The previously denied network/process checks needed to be rerun after the developer environment commit.
