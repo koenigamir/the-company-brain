@@ -1,5 +1,5 @@
 import streamlit as st
-from rag_engine import query_brain
+from rag_engine_aws import query_brain
 
 st.set_page_config(page_title="Company Brain", page_icon="brain", layout="wide")
 

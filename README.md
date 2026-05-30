@@ -219,15 +219,26 @@ Update `AGENTS.md` when any of these happen:
 - there is a warning, blocker, or risk to hand off,
 - an agent wants to leave a short operational note for the next agent.
 
+## Architecture
+
+The Company Brain is built as a hybrid intelligence system:
+
+1.  **Ingestion & Governance Layer (S3 + ChromaDB)**: Raw data is processed from the `Data/` directory, chunked, and enriched with role-based metadata. The resulting vector index is stored and synced to **Amazon S3** for persistence.
+2.  **Reasoning Layer (Amazon Bedrock)**: We use **Claude 4.6 Sonnet on Amazon Bedrock** (via regional inference profiles in `eu-central-1`) to synthesize retrieved context into structured "Wiki Pages."
+3.  **Trust & Verification Layer (LLM Wiki)**: Answers are presented with confidence scores, source citations, and role ownership to ensure institutional trust.
+4.  **Gap Closure**: Missing knowledge is automatically identified and routed to the responsible role (e.g., ESG Compliance, Tax Team) as defined in the metadata.
+
+## Development State
+
+- **Tech Stack**: Python, Streamlit, LangChain, Amazon Bedrock (Claude 4.6), ChromaDB, S3.
+- **Environment**: The application is configured to run on AWS (Region: `eu-central-1`).
+- **AWS Credentials**: Managed via a `.env` file (see `.env.example`).
+- **Run Command**: `streamlit run app.py` (ensure AWS credentials are set in the shell or `.env`).
+
 ## Current Unknowns / Not Yet Decided
 
 These items are still intentionally open and must not be invented:
 
-- final application architecture,
-- final tech stack,
-- local setup procedure,
-- environment variable contract,
-- build / run / test commands,
-- deployment and infrastructure design.
-
-The challenge explicitly allows freedom in technology choice, so these should only be documented once they are actually decided.
+- final deployment orchestration (e.g., Amplify Hosting vs ECS),
+- full GraphRAG implementation (currently using role-enriched vector metadata),
+- integration with internal SIX systems (SharePoint, Jira, etc.).
