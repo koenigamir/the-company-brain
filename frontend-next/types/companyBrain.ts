@@ -6,11 +6,21 @@ export type GraphDebug = {
   used_graph?: boolean;
 };
 
+export type GapSignals = {
+  entity_role_counts?: Record<string, number>;
+  chunk_role_counts?: Record<string, number>;
+  entities_detected?: string[];
+  entity_suggested_role?: string;
+  max_chunk_role?: string;
+  [key: string]: unknown;
+};
+
 export type GapRouting = {
   routed_to?: string;
   reason?: string;
   routing_confidence?: string;
-  signals?: Record<string, unknown>;
+  signals?: GapSignals;
+  graph_entities?: string[];
 };
 
 export type CompanyBrainAnswer = {
@@ -33,4 +43,13 @@ export type HealthResponse = {
   chroma_dir_exists: boolean;
   graph_exists: boolean;
   collection_name: string;
+};
+
+export type CompanyBrainIngestResult = {
+  ok: boolean;
+  filename: string;
+  chunks?: number;
+  role_owner?: string;
+  entities?: string[];
+  error?: string;
 };

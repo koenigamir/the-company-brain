@@ -29,6 +29,14 @@ Use this structure for new entries:
 
 ## Current Log
 
+### 2026-05-30 - Seven Frontend Implemented
+
+- Context: The Next/Vercel starter needed to become the real user-facing frontend for the existing FastAPI backend.
+- Actions: Re-read the README and migration notes, mapped the backend query/health/ingest contract, wrote compact design and plan docs under `docs/superpowers/`, added lightweight frontend tests, replaced the placeholder Next page with a branded three-page Seven experience, and verified the frontend with `npm test`, `npm run typecheck`, and `npm run build` in `frontend-next/`.
+- Changes made: `frontend-next/` now ships a Welcome page at `/`, a Query workspace at `/query`, an Upload workspace at `/upload`, shared Seven branding/navigation, backend health visibility, full answer rendering including graph and gap-routing details, and a user-facing ingest flow; README now reflects the new frontend shape.
+- Risks / open questions: The frontend still depends on the current direct ECS backend URL and does not solve the existing auth/HTTPS/governance gaps; in-app browser visual verification was not completed in this session because the bundled Browser plugin was missing the runtime file its own skill requires.
+- Next agent: Continue from `frontend-next/`, keep using the proxy routes under `app/api/company-brain/*`, and if you want browser-based visual checks in Codex first confirm the Browser plugin runtime is installed correctly.
+
 ### 2026-05-30 - README And Agent Log Audit
 
 - Context: After the AWS/Next developer handoff was pushed, the docs needed a final consistency check.
