@@ -4,11 +4,13 @@ import Link from "next/link";
 import { FormEvent, useState } from "react";
 
 import {
+  buildGapTicketRequest,
   describeAnswerMode,
   formatMetadataList,
   getConfidenceTone,
   getGapSignalLines,
   getPrimaryOwner,
+  getRoutedRoles,
 } from "../../lib/companyBrainPresentation";
 import type { CompanyBrainAnswer } from "../../types/companyBrain";
 
@@ -29,6 +31,7 @@ export default function QueryPage() {
   const answerMode = describeAnswerMode(answer?.graph);
   const confidenceTone = getConfidenceTone(answer?.confidence);
   const gapSignalLines = getGapSignalLines(answer?.gap_routing);
+  const routedRoles = getRoutedRoles(answer);
 
   async function submitQuery(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -230,7 +233,7 @@ export default function QueryPage() {
                   <dl className="detailGrid">
                     <div className="detailTile">
                       <dt>Route to</dt>
-                      <dd>{answer.gap_routing.routed_to || "Master Data Ops"}</dd>
+                      <dd>{routedRoles.join(", ")}</dd>
                     </div>
                     <div className="detailTile">
                       <dt>Reason</dt>
@@ -270,19 +273,9 @@ export default function QueryPage() {
                               headers: {
                                 "Content-Type": "application/json",
                               },
-                              body: JSON.stringify({
-                                question,
-                                gap:
-                                  answer.gap_ticket_draft ||
-                                  answer.missing_topics?.join(", ") ||
-                                  answer.gap_routing?.reason ||
-                                  "Knowledge gap review requested.",
-                                body:
-                                  answer.gap_ticket_draft ||
-                                  answer.gap_routing?.reason ||
-                                  "Knowledge gap review requested.",
-                                missing_topics: answer.missing_topics || [],
-                              }),
+                              body: JSON.stringify(
+                                buildGapTicketRequest(question, answer),
+                              ),
                             },
                           );
                           const body = await response.json();
@@ -308,7 +301,7 @@ export default function QueryPage() {
                     </button>
                     {ticketCreated ? (
                       <span className="inlineSuccess">
-                        Demo ticket created for {getPrimaryOwner(answer)}.
+                        Demo ticket created for {routedRoles.join(", ")}.
                       </span>
                     ) : null}
                   </div>

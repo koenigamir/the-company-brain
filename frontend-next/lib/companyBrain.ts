@@ -1,5 +1,6 @@
 import type {
   CompanyBrainAnswer,
+  CompanyBrainIngestResult,
   DocumentsResponse,
   GapTicketRequest,
   GapTicketResponse,
@@ -73,7 +74,9 @@ export async function getCompanyBrainHealth(): Promise<HealthResponse> {
   return (await response.json()) as HealthResponse;
 }
 
-export async function ingestCompanyBrainFile(formData: FormData): Promise<unknown> {
+export async function ingestCompanyBrainFile(
+  formData: FormData,
+): Promise<CompanyBrainIngestResult> {
   const response = await fetchWithTimeout(`${backendBaseUrl()}/ingest`, {
     method: "POST",
     body: formData,
@@ -84,7 +87,7 @@ export async function ingestCompanyBrainFile(formData: FormData): Promise<unknow
     throw new Error(detail || `Backend returned ${response.status}.`);
   }
 
-  return response.json();
+  return (await response.json()) as CompanyBrainIngestResult;
 }
 
 export async function getCompanyBrainRoles(): Promise<RolesResponse> {

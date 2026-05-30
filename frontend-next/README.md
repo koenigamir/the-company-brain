@@ -138,6 +138,7 @@ role_owner=<optional role name>
 
 The checked-in UI is a functional developer workspace, not the final product design. It intentionally exposes:
 
+- an intro splash at `/` plus a richer welcome page at `/welcome`,
 - backend health and persistence status,
 - role catalog,
 - document metadata records,

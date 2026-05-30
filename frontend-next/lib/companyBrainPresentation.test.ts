@@ -2,10 +2,14 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
+  buildGapTicketRequest,
   describeAnswerMode,
   formatMetadataList,
   getConfidenceTone,
+  getDocumentOwners,
+  getDocumentSource,
   getGapSignalLines,
+  getRoutedRoles,
 } from "./companyBrainPresentation";
 
 test("describeAnswerMode reports graph expansion when graph context was used", () => {
@@ -54,4 +58,81 @@ test("getGapSignalLines summarizes routing signals for the UI", () => {
       "Retrieved chunk owners: Master Data Ops 3",
     ],
   );
+});
+
+test("getRoutedRoles prefers explicit routed roles before falling back", () => {
+  assert.deepEqual(
+    getRoutedRoles({
+      title: "Gap",
+      short_answer: "Missing coverage.",
+      confidence: "Low",
+      sources: [],
+      role_owner: "Master Data Ops",
+      gap_routing: {
+        routed_to: "Regulatory Services",
+        routed_roles: ["Regulatory Services", "Tax Team"],
+      },
+    }),
+    ["Regulatory Services", "Tax Team"],
+  );
+
+  assert.deepEqual(
+    getRoutedRoles({
+      title: "Fallback",
+      short_answer: "Fallback coverage.",
+      confidence: "Low",
+      sources: [],
+      role_owner: "Master Data Ops",
+    }),
+    ["Master Data Ops"],
+  );
+});
+
+test("document helpers favor canonical backend document fields", () => {
+  assert.equal(
+    getDocumentSource({
+      source_file: "sfdr-guide.pdf",
+      filename: "ignored.pdf",
+    }),
+    "sfdr-guide.pdf",
+  );
+
+  assert.equal(
+    getDocumentOwners({
+      role_owners: ["ESG Compliance", "Regulatory Services"],
+      role_owner: "Master Data Ops",
+    }),
+    "ESG Compliance, Regulatory Services",
+  );
+});
+
+test("buildGapTicketRequest preserves the backend gap object", () => {
+  const request = buildGapTicketRequest(
+    "What is missing?",
+    {
+      title: "Gap",
+      short_answer: "Coverage is incomplete.",
+      confidence: "Low",
+      sources: [],
+      role_owner: "Master Data Ops",
+      missing_topics: ["Bangladesh framework"],
+      gap_ticket_draft: "Drafted ticket body",
+      gap_routing: {
+        routed_to: "Regulatory Services",
+        routed_roles: ["Regulatory Services"],
+        reason: "The missing topic is regulatory.",
+        routing_confidence: "High",
+      },
+    },
+  );
+
+  assert.equal(request.question, "What is missing?");
+  assert.deepEqual(request.gap, {
+    routed_to: "Regulatory Services",
+    routed_roles: ["Regulatory Services"],
+    reason: "The missing topic is regulatory.",
+    routing_confidence: "High",
+  });
+  assert.equal(request.body, "Drafted ticket body");
+  assert.deepEqual(request.missing_topics, ["Bangladesh framework"]);
 });

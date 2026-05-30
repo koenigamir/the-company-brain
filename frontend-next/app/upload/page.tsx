@@ -38,6 +38,7 @@ export default function UploadPage() {
   const [result, setResult] = useState<CompanyBrainIngestResult | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [availableRoles, setAvailableRoles] = useState(roleOptions);
+  const [rolesBackend, setRolesBackend] = useState<string | null>(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -53,6 +54,7 @@ export default function UploadPage() {
         }
         if (isMounted) {
           setAvailableRoles([roleOptions[0], ...body.roles]);
+          setRolesBackend(body.backend);
         }
       } catch {
         // Keep the static fallback list if the roles endpoint is unavailable.
@@ -183,6 +185,13 @@ export default function UploadPage() {
                 operations, plus screenshots, transcripts, and short demo media.
               </p>
             </div>
+            <div className="infoTile">
+              <h3>Current role catalog</h3>
+              <p>
+                Roles are loaded from the backend via the local proxy route and are
+                currently served from {rolesBackend || "the fallback static list"}.
+              </p>
+            </div>
           </div>
 
           {error ? (
@@ -202,7 +211,11 @@ export default function UploadPage() {
               <dl className="detailGrid">
                 <div className="detailTile">
                   <dt>Owner</dt>
-                  <dd>{result.role_owner || "Auto-detected"}</dd>
+                  <dd>
+                    {result.role_owners?.length
+                      ? result.role_owners.join(", ")
+                      : result.role_owner || "Auto-detected"}
+                  </dd>
                 </div>
                 <div className="detailTile">
                   <dt>Entities</dt>
@@ -211,6 +224,10 @@ export default function UploadPage() {
                       ? result.entities.join(", ")
                       : "No graph entities were extracted."}
                   </dd>
+                </div>
+                <div className="detailTile">
+                  <dt>Modality</dt>
+                  <dd>{result.modality || "document"}</dd>
                 </div>
               </dl>
             </section>

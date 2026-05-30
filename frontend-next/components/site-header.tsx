@@ -8,7 +8,7 @@ import type { HealthResponse } from "../types/companyBrain";
 import { BrandMark } from "./brand-mark";
 
 const navigation = [
-  { href: "/", label: "Welcome" },
+  { href: "/welcome", label: "Welcome" },
   { href: "/query", label: "Query" },
   { href: "/upload", label: "Upload" },
 ];

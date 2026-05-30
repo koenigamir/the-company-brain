@@ -29,6 +29,14 @@ Use this structure for new entries:
 
 ## Current Log
 
+### 2026-05-31 - Seven Welcome Refresh And Backend Contract Alignment
+
+- Context: The frontend needed the correct SIX title branding, a real welcome route again, and UI support for the migrated backend routes now documented in `frontend-next/README.md`.
+- Actions: Wrote a fresh spec and implementation plan under `docs/superpowers/`, restored a dedicated intro splash at `/`, created a richer `/welcome` page, updated shared frontend helpers and types, aligned gap-ticket submission with the current backend payload, and extended frontend tests around the new shared logic.
+- Changes made: `frontend-next/` now uses a splash entry at `/`, a full welcome workspace at `/welcome`, the in-code SIX logo in the title area, live welcome-page loading of health/roles/documents through `/api/company-brain/*`, multi-role-aware gap-ticket payload creation, richer upload metadata display, and updated frontend handoff docs.
+- Risks / open questions: The UI now matches the current backend contract more closely, but the live backend URL still points to a temporary ECS public IP and production auth/HTTPS remain open; Codex's in-app browser still returned `net::ERR_BLOCKED_BY_CLIENT` on local `localhost` verification, so visual confirmation relied on build/test evidence instead.
+- Next agent: Continue from `frontend-next/`, keep browser calls behind the Next proxy routes, and if you need a visual check inside Codex verify first whether the in-app browser can access local URLs in this environment.
+
 ### 2026-05-31 - Frontend Handoff Updated
 
 - Context: After the migrated GraphRAG backend was deployed to ECS task definition revision 2, `frontend-next/` needed to be cleaned up as the frontend developer handoff.

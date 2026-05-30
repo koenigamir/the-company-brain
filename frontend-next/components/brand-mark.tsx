@@ -4,6 +4,37 @@ type BrandMarkProps = {
   showWordmark?: boolean;
 };
 
+type SixLogoProps = {
+  className?: string;
+};
+
+export function SixLogo({ className }: SixLogoProps) {
+  return (
+    <svg
+      aria-label="SIX logo"
+      className={`six-logo${className ? ` ${className}` : ""}`}
+      role="img"
+      viewBox="0 0 560 152"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <g
+        fill="none"
+        stroke="currentColor"
+        strokeLinecap="square"
+        strokeLinejoin="round"
+        strokeWidth="34"
+      >
+        <path d="M10 117h34c23 0 37-7 52-24L189 28c15-15 29-20 51-20h52" />
+        <path d="M257 8v136" />
+        <path d="M318 8h52c22 0 36 6 51 24l39 45" />
+        <path d="M318 117h52c22 0 36-6 51-24l39-45" />
+        <path d="M460 77l39-45c15-18 29-24 51-24h0" />
+        <path d="M460 77l39 40c15 18 29 24 51 24h0" />
+      </g>
+    </svg>
+  );
+}
+
 export function BrandMark({ showWordmark = true }: BrandMarkProps) {
   return (
     <div className="brandMark">

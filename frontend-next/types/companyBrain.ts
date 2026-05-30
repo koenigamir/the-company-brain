@@ -13,6 +13,7 @@ export type GapRouting = {
   routing_confidence?: string;
   signals?: Record<string, unknown>;
   graph_entities?: string[];
+  [key: string]: unknown;
 };
 
 export type GapSignals = {
@@ -57,12 +58,17 @@ export type RolesResponse = {
 
 export type CompanyBrainDocument = {
   id?: string;
+  source_file?: string;
   filename?: string;
   source?: string;
+  role_owners?: string[];
   role_owner?: string;
   owner?: string;
   uploaded_at?: string;
   last_updated?: string;
+  updated_at?: string;
+  chunks?: number;
+  modality?: string;
   status?: string;
   [key: string]: unknown;
 };
@@ -73,7 +79,7 @@ export type DocumentsResponse = {
 
 export type GapTicketRequest = {
   question: string;
-  gap: string;
+  gap: GapRouting | Record<string, unknown>;
   body?: string;
   missing_topics?: string[];
 };
@@ -81,6 +87,7 @@ export type GapTicketRequest = {
 export type GapTicketResponse = {
   ok?: boolean;
   ticket?: Record<string, unknown>;
+  tickets?: Array<Record<string, unknown>>;
   [key: string]: unknown;
 };
 
@@ -92,10 +99,15 @@ export type QueryRequest = {
 export type CompanyBrainIngestResult = {
   ok?: boolean;
   filename?: string;
+  source_file?: string;
   chunks?: number;
+  role_owners?: string[];
   role_owner?: string;
   owner?: string;
   entities?: string[];
+  modality?: string;
+  updated_at?: string;
+  last_updated?: string;
   message?: string;
   [key: string]: unknown;
 };
