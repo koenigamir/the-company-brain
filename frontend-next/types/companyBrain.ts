@@ -15,6 +15,11 @@ export type GapRouting = {
   graph_entities?: string[];
 };
 
+export type GapSignals = {
+  entity_role_counts?: Record<string, number>;
+  chunk_role_counts?: Record<string, number>;
+};
+
 export type CompanyBrainAnswer = {
   title: string;
   short_answer: string;
@@ -37,10 +42,60 @@ export type HealthResponse = {
   data_dir: string;
   chroma_dir: string;
   graph_path: string;
+  store_dir: string;
   data_dir_exists: boolean;
   chroma_dir_exists: boolean;
   graph_exists: boolean;
-  store_dir?: string;
-  store_dir_exists?: boolean;
+  store_dir_exists: boolean;
   collection_name: string;
+};
+
+export type RolesResponse = {
+  roles: string[];
+  backend: "local" | "supabase" | string;
+};
+
+export type CompanyBrainDocument = {
+  id?: string;
+  filename?: string;
+  source?: string;
+  role_owner?: string;
+  owner?: string;
+  uploaded_at?: string;
+  last_updated?: string;
+  status?: string;
+  [key: string]: unknown;
+};
+
+export type DocumentsResponse = {
+  documents: CompanyBrainDocument[];
+};
+
+export type GapTicketRequest = {
+  question: string;
+  gap: string;
+  body?: string;
+  missing_topics?: string[];
+};
+
+export type GapTicketResponse = {
+  ok?: boolean;
+  ticket?: Record<string, unknown>;
+  [key: string]: unknown;
+};
+
+export type QueryRequest = {
+  question: string;
+  history?: Array<Record<string, string>>;
+};
+
+export type CompanyBrainIngestResult = {
+  ok?: boolean;
+  filename?: string;
+  chunks?: number;
+  role_owner?: string;
+  owner?: string;
+  entities?: string[];
+  message?: string;
+  [key: string]: unknown;
 };

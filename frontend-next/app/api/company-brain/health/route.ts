@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 
 import { getCompanyBrainHealth } from "@/lib/companyBrain";
 
+export const maxDuration = 60;
+
 export async function GET() {
   try {
     const health = await getCompanyBrainHealth();

@@ -71,7 +71,7 @@ Stop AWS compute when done:
 
 ## Next.js / Vercel Developer Workflow
 
-The migration starter lives in `frontend-next/`.
+The clean frontend handoff lives in `frontend-next/`. It is a functional developer workspace for the migrated backend contract, not the final visual product.
 
 ```bash
 cd frontend-next
@@ -81,7 +81,7 @@ cp .env.local.example .env.local
 Set:
 
 ```text
-COMPANY_BRAIN_API_URL=http://x.x.x.x:8000
+COMPANY_BRAIN_API_URL=http://63.176.100.250:8000
 ```
 
 Then:
@@ -94,6 +94,19 @@ npm run dev
 
 The Next.js app calls its own API routes under `/api/company-brain/*`. Those server routes proxy to the AWS backend, so the backend URL remains a server-side env var.
 
+Current frontend proxy routes:
+
+```text
+GET  /api/company-brain/health
+GET  /api/company-brain/roles
+GET  /api/company-brain/documents
+POST /api/company-brain/query
+POST /api/company-brain/ingest
+POST /api/company-brain/gap-ticket
+```
+
+Read `frontend-next/README.md` before changing the frontend. It is the handoff for frontend developers and their agents.
+
 Use Node 22 LTS for local frontend work and Vercel parity. If `npm run typecheck` or `npm run build` hangs locally, remove generated artifacts and reinstall under Node 22:
 
 ```bash
@@ -102,7 +115,7 @@ nvm use
 npm install
 ```
 
-For Vercel, set project root to `frontend-next` and configure the `COMPANY_BRAIN_API_URL` environment variable in Vercel. Do not use `NEXT_PUBLIC_` for the backend URL unless the backend is intentionally public and stable.
+For Vercel, set project root to `frontend-next` and configure the `COMPANY_BRAIN_API_URL` environment variable in Vercel. Do not use `NEXT_PUBLIC_` for the backend URL.
 
 ## Suggested Developer Split
 
