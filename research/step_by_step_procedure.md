@@ -1,6 +1,6 @@
 # Step-by-Step Procedure: 24-Hour Company Brain Build
 
-> **Goal:** turn the research in `group_idea_research.md` into a clickable, governed knowledge assistant demo that four collaborators can build in one day.
+> **Goal:** turn the research in `research/group_idea_research.md` into a clickable, governed knowledge assistant demo that four collaborators can build in one day.
 >
 > **Core principle:** do not try to build the entire vision at full depth in 24 hours. Build one strong vertical slice that proves the system can ingest messy knowledge, respect role-based access, answer with citations, show freshness and provenance, and route knowledge gaps back to the right role.
 

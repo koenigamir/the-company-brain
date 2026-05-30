@@ -24,8 +24,10 @@ Follow this sequence every time:
 - `AGENTS.md` is not the source of truth. It is the rolling progress log, discovery log, and handoff log for agents.
 - If `README.md` and `AGENTS.md` conflict, `README.md` wins.
 - Supporting context files currently include:
-  - `group_idea_research.md` for brainstorming output and idea exploration
+  - `app.py`, `rag_engine.py`, `ingest.py`, and `requirements.txt` for the current prototype code path
+  - `research/group_idea_research.md` for brainstorming output and idea exploration
   - `research/step_by_step_procedure.md` for current execution thinking and work split
+  - `research/2026-05-30_multimodal_ingestion_model_research.md` for ingestion-model and retrieval-stack research
   - `Data/SIX_Hack_Zurich-main/` for the canonical official given challenge material
 - If a new durable rule, workflow, or top-level fact is discovered, update `README.md` first and then note the change briefly in `AGENTS.md`.
 
@@ -52,6 +54,7 @@ While working, every agent must follow these rules:
 - Verify actual content of data files; do not trust extensions or filenames.
 - Treat the `Data/` directory as source material, not as automatically clean or perfectly curated input.
 - Treat `Data/SIX_Hack_Zurich-main/` as the canonical official corpus for new work and scripts. The duplicated top-level files directly under `Data/` are not the canonical source.
+- Keep `AGENTS.md` concise by consolidating superseded or overlapping notes instead of stacking near-duplicate entries about the same review or discovery.
 - Avoid committing operating-system artifacts such as `.DS_Store`.
 - Prefer updating existing top-level docs over creating parallel or conflicting guidance.
 
@@ -175,7 +178,7 @@ Agents must assume the data pack is heterogeneous and imperfect:
 
 Agents should consult these when relevant:
 
-- `group_idea_research.md` for idea generation and early solution directions
+- `research/group_idea_research.md` for idea generation and early solution directions
 - `research/step_by_step_procedure.md` for current process thinking and task decomposition
 
 ### Likely Knowledge Systems In Scope
@@ -204,6 +207,13 @@ Agents should treat these as part of the real-world problem context even when th
 - Do not create conflicting guidance documents when an update to `README.md` would solve the problem.
 - Do not commit `.DS_Store` or similar operating-system artifacts.
 
+## Current Repo Snapshot
+
+- `app.py`, `rag_engine.py`, and `ingest.py` are the current prototype entry points.
+- The current product code is still a prototype and must not be mistaken for the final architecture.
+- `research/` holds generated planning, research, and analysis markdown.
+- `Data/SIX_Hack_Zurich-main/` is the canonical official challenge corpus; duplicated top-level `Data/*` files are legacy copies.
+
 ## What To Update When Facts Change
 
 Update `README.md` when any of these change:
@@ -213,6 +223,7 @@ Update `README.md` when any of these change:
 - durable collaboration rules,
 - setup or runtime assumptions,
 - repo layout or top-level file roles,
+- location of core context folders such as `research/` or `Data/`,
 - major project context that future agents must know.
 
 Update `AGENTS.md` when any of these happen:
@@ -220,7 +231,8 @@ Update `AGENTS.md` when any of these happen:
 - progress was made,
 - a new discovery matters for the next agent,
 - there is a warning, blocker, or risk to hand off,
-- an agent wants to leave a short operational note for the next agent.
+- an agent wants to leave a short operational note for the next agent,
+- a newer note supersedes an older one and the overlapping entries should be consolidated.
 
 ## Current Unknowns / Not Yet Decided
 
