@@ -204,6 +204,15 @@ Agents should treat these as part of the real-world problem context even when th
 - Do not create conflicting guidance documents when an update to `README.md` would solve the problem.
 - Do not commit `.DS_Store` or similar operating-system artifacts.
 
+## Current Stack Decisions
+
+- The prototype frontend now lives in `frontend/` as a Next.js App Router application.
+- Vercel is the target hosting platform for the frontend.
+- In Vercel, the project root should be set to `frontend/` so the deployment picks up the Next.js app instead of the Python prototype files in the repository root.
+- The frontend currently uses a stable mock answer contract so the UI can run before the real backend exists.
+- The Python/Streamlit prototype remains in the repo as reference material until the team decides whether to retire or adapt it.
+- Frontend commands run from `frontend/`: install dependencies with `npm install`, start locally with `npm run dev`, and create a production build with `npm run build`.
+
 ## What To Update When Facts Change
 
 Update `README.md` when any of these change:
@@ -226,11 +235,10 @@ Update `AGENTS.md` when any of these happen:
 
 These items are still intentionally open and must not be invented:
 
-- final application architecture,
-- final tech stack,
+- final backend architecture,
 - local setup procedure,
 - environment variable contract,
 - build / run / test commands,
 - deployment and infrastructure design.
 
-The challenge explicitly allows freedom in technology choice, so these should only be documented once they are actually decided.
+The frontend stack is now decided; the remaining open questions are mostly about how the AWS backend, deployment flow, and environment variables should be finalized.
