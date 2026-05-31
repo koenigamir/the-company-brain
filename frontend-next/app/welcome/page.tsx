@@ -12,7 +12,9 @@ import {
   getDocumentOwners,
   getDocumentRoleList,
   getDocumentSource,
+  getDocumentTypeLabel,
   getDocumentUpdated,
+  getDocumentUpdatedLabel,
   getDocumentVisibilitySummary,
   getRoleCatalogEntry,
 } from "../../lib/companyBrainPresentation";
@@ -192,6 +194,26 @@ export default function WelcomePage() {
       <section className="landingSection catalogSection">
         <div className="sectionHeading catalogHeading">
           <h2>Catalog Overview</h2>
+          <p className="supportingCopy">
+            A frontend map of how backend document records connect to the role catalog.
+          </p>
+        </div>
+
+        <div className="catalogMap" aria-label="Knowledge map">
+          <div className="catalogNode sourceNode">
+            <span>Backend document registry</span>
+            <strong>{state.documents.length} documents</strong>
+          </div>
+          <div className="catalogConnector" aria-hidden="true" />
+          <div className="catalogNode hubNode">
+            <span>Knowledge map</span>
+            <strong>Role ownership</strong>
+          </div>
+          <div className="catalogConnector" aria-hidden="true" />
+          <div className="catalogNode sourceNode">
+            <span>Role catalog</span>
+            <strong>{knownRoles.length} teams</strong>
+          </div>
         </div>
 
         <div className="roleCatalogGrid cleanCatalogGrid">
@@ -208,6 +230,13 @@ export default function WelcomePage() {
                   </span>
                 </div>
                 <p>{entry.description}</p>
+                <div className="tagRow compactTagRow">
+                  {entry.tags.slice(0, 3).map((tag) => (
+                    <span className="tagChip" key={tag}>
+                      {tag}
+                    </span>
+                  ))}
+                </div>
               </article>
             );
           })}
@@ -230,26 +259,18 @@ export default function WelcomePage() {
                 <div className="documentCardHeader">
                   <h3>{getDocumentSource(document)}</h3>
                   <span className="documentModeBadge">
-                    {document.modality || "document"}
+                    {getDocumentTypeLabel(document)}
                   </span>
                 </div>
                 <p className="documentMetaRow">
                   Owners: {getDocumentOwners(document)}
                 </p>
-                <dl className="detailGrid compactDetailGrid">
-                  <div className="detailTile">
-                    <dt>Visibility</dt>
-                    <dd>{getDocumentVisibilitySummary(document)}</dd>
-                  </div>
-                  <div className="detailTile">
-                    <dt>Clearance</dt>
-                    <dd>{formatClearanceLabel(document.min_clearance)}</dd>
-                  </div>
-                  <div className="detailTile">
-                    <dt>Updated</dt>
-                    <dd>{getDocumentUpdated(document)}</dd>
-                  </div>
-                </dl>
+                <div className="documentAccessLine">
+                  <span>{getDocumentTypeLabel(document)}</span>
+                  <span>{getDocumentVisibilitySummary(document)}</span>
+                  <span>{formatClearanceLabel(document.min_clearance)}</span>
+                  <span>{getDocumentUpdatedLabel(document)}</span>
+                </div>
               </article>
             ))}
           </div>

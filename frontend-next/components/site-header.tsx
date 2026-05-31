@@ -11,7 +11,6 @@ type SiteHeaderFrameProps = {
 };
 
 const WORKSPACE_LINKS = [
-  { href: "/", label: "Start" },
   { href: "/welcome", label: "Welcome" },
   { href: "/query", label: "Query" },
   { href: "/upload", label: "Add files" },

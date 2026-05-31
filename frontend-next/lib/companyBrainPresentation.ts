@@ -227,6 +227,44 @@ export function getDocumentUpdated(document: CompanyBrainDocument): string {
   );
 }
 
+export function getDocumentUpdatedLabel(document: CompanyBrainDocument): string {
+  const value = getDocumentUpdated(document);
+  if (value === "Unknown") {
+    return value;
+  }
+
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) {
+    return value;
+  }
+
+  return new Intl.DateTimeFormat("en", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  }).format(parsed);
+}
+
+export function getDocumentTypeLabel(document: CompanyBrainDocument): string {
+  const explicit = document.modality?.trim().toLowerCase();
+  if (explicit && explicit !== "document") {
+    return explicit.charAt(0).toUpperCase() + explicit.slice(1);
+  }
+
+  const source = getDocumentSource(document).toLowerCase();
+  if (source.endsWith(".pdf")) {
+    return "PDF";
+  }
+  if (source.endsWith(".xlsx") || source.endsWith(".xls") || source.endsWith(".csv")) {
+    return "Spreadsheet";
+  }
+  if (source.endsWith(".docx") || source.endsWith(".doc")) {
+    return "Document";
+  }
+
+  return "Document";
+}
+
 export function getDocumentVisibilitySummary(
   document: CompanyBrainDocument,
 ): string {

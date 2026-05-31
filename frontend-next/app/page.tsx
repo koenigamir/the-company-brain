@@ -19,7 +19,7 @@ export default function Home() {
           </div>
 
           <p className="creatorLockup">
-            <span className="creatorCopy">seven created for</span>
+            <span className="creatorCopy">created for</span>
             <SixLogo className="heroSixLogo" />
           </p>
 

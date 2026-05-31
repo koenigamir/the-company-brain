@@ -11,6 +11,8 @@ import {
   getDocumentRoleList,
   getDocumentOwners,
   getDocumentSource,
+  getDocumentTypeLabel,
+  getDocumentUpdatedLabel,
   getGapSignalLines,
   normalizeAnswerText,
   getRoutedRoles,
@@ -146,6 +148,24 @@ test("document helpers favor canonical backend document fields", () => {
     }),
     ["ESG Compliance", "Regulatory Services"],
   );
+});
+
+test("document display helpers make backend metadata readable", () => {
+  assert.equal(
+    getDocumentUpdatedLabel({
+      source_file: "emt.xlsx",
+      updated_at: "2026-05-31T08:06:56.817425+00:00",
+    }),
+    "May 31, 2026",
+  );
+  assert.equal(
+    getDocumentUpdatedLabel({
+      source_file: "no-date.pdf",
+    }),
+    "Unknown",
+  );
+  assert.equal(getDocumentTypeLabel({ source_file: "taxonomy.pdf" }), "PDF");
+  assert.equal(getDocumentTypeLabel({ source_file: "template.xlsx" }), "Spreadsheet");
 });
 
 test("buildGapTicketRequest preserves the backend gap object", () => {

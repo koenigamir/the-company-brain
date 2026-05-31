@@ -29,6 +29,14 @@ Use this structure for new entries:
 
 ## Current Log
 
+### 2026-05-31 - Frontend Refresh
+
+- Context: User requested a frontend-only cleanup on branch `frontend` for the splash copy, query UI, welcome/catalogue overview, access-ready documents, and top navigation.
+- Actions: Reviewed the frontend environment, kept implementation changes inside `frontend-next/`, installed frontend dependencies from the existing lockfile for verification, tested the app locally, and checked the touched pages in the in-app browser.
+- Changes made: Removed `seven` from the splash sponsor line, removed the `Start` nav item while keeping the brand link to `/`, simplified the query page into a compact agent UI with an AI-glow question box, added a frontend-only catalogue knowledge map, compacted access-ready document metadata, and updated frontend tests/helper formatting.
+- Risks / open questions: Local browser verification showed backend proxy `502` responses because no reachable backend environment was configured here; the frontend fallback states rendered and no backend/API contract code was changed.
+- Next agent: Continue frontend work in `frontend-next/`; run frontend commands with Node/npm from the local nvm Node 22 install if the shell PATH does not expose `npm`.
+
 ### 2026-05-31 - Workspace Header Navigation Restored
 
 - Context: The user wanted the top navigation back on all workspace pages, but not on the intro start slide, and also needed a direct way back to the start page.

@@ -18,6 +18,10 @@
   --green: #0a7c52;
   --amber: #8a5a00;
   --shadow: 0 22px 60px rgba(61, 28, 35, 0.12);
+  --ai-glow:
+    0 0 0 1px rgba(228, 35, 19, 0.18),
+    0 0 28px rgba(88, 215, 255, 0.2),
+    0 0 52px rgba(141, 124, 255, 0.14);
 }
 
 * {
@@ -688,6 +692,56 @@ h4 {
   max-width: none;
 }
 
+.catalogMap {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 4rem minmax(0, 1fr) 4rem minmax(0, 1fr);
+  gap: 0.75rem;
+  align-items: center;
+  margin-top: 1.3rem;
+  padding: 1rem;
+  border: 1px solid rgba(66, 30, 36, 0.08);
+  border-radius: 28px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.72), rgba(255, 247, 246, 0.62)),
+    radial-gradient(circle at 50% 50%, rgba(88, 215, 255, 0.12), transparent 58%);
+}
+
+.catalogNode {
+  display: grid;
+  gap: 0.28rem;
+  min-height: 5.5rem;
+  align-content: center;
+  padding: 1rem;
+  border: 1px solid rgba(66, 30, 36, 0.08);
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.78);
+}
+
+.catalogNode span {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.catalogNode strong {
+  font-family: var(--font-display);
+  font-size: 1.16rem;
+  letter-spacing: -0.03em;
+}
+
+.hubNode {
+  border-color: rgba(228, 35, 19, 0.22);
+  box-shadow: var(--ai-glow);
+}
+
+.catalogConnector {
+  height: 2px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, rgba(228, 35, 19, 0.35), rgba(88, 215, 255, 0.75));
+}
+
 .featureGrid,
 .journeyGrid,
 .ctaGrid,
@@ -848,12 +902,89 @@ h4 {
   border-color: rgba(215, 25, 45, 0.42);
   box-shadow:
     0 0 0 4px rgba(215, 25, 45, 0.08),
+    0 0 34px rgba(88, 215, 255, 0.2),
     inset 0 1px 0 rgba(255, 255, 255, 0.44);
 }
 
 .fieldTextarea {
   min-height: 9rem;
   resize: vertical;
+}
+
+.queryTextarea {
+  min-height: 8rem;
+  border-color: transparent;
+  background:
+    linear-gradient(#fff, #fff) padding-box,
+    linear-gradient(135deg, rgba(228, 35, 19, 0.78), rgba(88, 215, 255, 0.72), rgba(141, 124, 255, 0.58)) border-box;
+  box-shadow: var(--ai-glow);
+}
+
+.queryTextarea:focus {
+  border-color: transparent;
+  box-shadow:
+    0 0 0 4px rgba(228, 35, 19, 0.08),
+    0 0 36px rgba(88, 215, 255, 0.26),
+    0 0 72px rgba(141, 124, 255, 0.18);
+}
+
+.agentBar {
+  display: grid;
+  gap: 0.8rem;
+  padding: 0.95rem;
+  border: 1px solid rgba(66, 30, 36, 0.08);
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.62);
+}
+
+.agentIdentity {
+  display: grid;
+  grid-template-columns: auto minmax(12rem, 1fr);
+  gap: 0.8rem;
+  align-items: center;
+}
+
+.agentLabel {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.agentSelect {
+  min-width: 0;
+  width: 100%;
+  border: 1px solid rgba(66, 30, 36, 0.1);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.82);
+  color: var(--ink);
+  padding: 0.78rem 1rem;
+  outline: none;
+}
+
+.agentMeta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+}
+
+.agentMeta span,
+.documentAccessLine span {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.2rem;
+  padding: 0 0.75rem;
+  border: 1px solid rgba(66, 30, 36, 0.08);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.78);
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.queryActionRow {
+  justify-content: flex-end;
 }
 
 .sampleRow {
@@ -1096,6 +1227,10 @@ h4 {
   background: rgba(255, 253, 252, 0.84);
 }
 
+.compactTagRow {
+  margin-top: 0;
+}
+
 .roleCardHeader,
 .documentCardHeader {
   display: flex;
@@ -1138,6 +1273,13 @@ h4 {
 .documentMetaRow {
   color: var(--muted);
   font-size: 0.92rem;
+}
+
+.documentAccessLine {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.2rem;
 }
 
 .selectionHintCard {
@@ -1238,6 +1380,7 @@ h4 {
   .journeyGrid,
   .ctaGrid,
   .workspaceOverviewGrid,
+  .catalogMap,
   .roleGrid,
   .roleCatalogGrid,
   .cleanCatalogGrid,
@@ -1248,6 +1391,13 @@ h4 {
   .infoStrip,
   .heroSnapshotGrid {
     grid-template-columns: 1fr;
+  }
+
+  .catalogConnector {
+    width: 2px;
+    height: 2rem;
+    justify-self: center;
+    background: linear-gradient(180deg, rgba(228, 35, 19, 0.35), rgba(88, 215, 255, 0.75));
   }
 }
 
@@ -1268,6 +1418,10 @@ h4 {
   .siteNav {
     width: 100%;
     justify-content: space-between;
+  }
+
+  .agentIdentity {
+    grid-template-columns: 1fr;
   }
 
   .pageShell {

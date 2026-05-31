@@ -32,7 +32,6 @@ export default function QueryPage() {
   const [showMore, setShowMore] = useState(false);
   const [demoAccounts, setDemoAccounts] = useState<DemoAccount[]>([FALLBACK_ACCOUNT]);
   const [viewerAccountId, setViewerAccountId] = useState(FALLBACK_ACCOUNT.id);
-  const [accountsBackend, setAccountsBackend] = useState<string | null>(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -51,7 +50,6 @@ export default function QueryPage() {
 
         if (isMounted) {
           setDemoAccounts(body.accounts);
-          setAccountsBackend(body.backend);
           setViewerAccountId((current) =>
             body.accounts.some((account) => account.id === current)
               ? current
@@ -107,6 +105,7 @@ export default function QueryPage() {
     : selectedAccount.department_role
       ? `Role-based access for ${selectedAccount.department_role}`
       : "Clearance-only access";
+  const selectedRole = selectedAccount.department_role || "No team scope";
 
   return (
     <main className="pageShell">
@@ -117,60 +116,42 @@ export default function QueryPage() {
       <section className="toolLayout minimalToolLayout">
         <div className="toolCard queryCard minimalToolCard">
           <form className="stackForm" onSubmit={submitQuery}>
-            <label className="fieldLabel" htmlFor="viewerAccount">
-              Ask as
-            </label>
-            <select
-              className="fieldInput"
-              id="viewerAccount"
-              onChange={(event) => setViewerAccountId(event.target.value)}
-              value={viewerAccountId}
-            >
-              {demoAccounts.map((account) => (
-                <option key={account.id} value={account.id}>
-                  {account.label}
-                </option>
-              ))}
-            </select>
+            <div className="agentBar" aria-label="Agent profile">
+              <div className="agentIdentity">
+                <span className="agentLabel">Agent profile</span>
+                <select
+                  className="agentSelect"
+                  id="viewerAccount"
+                  onChange={(event) => setViewerAccountId(event.target.value)}
+                  value={viewerAccountId}
+                >
+                  {demoAccounts.map((account) => (
+                    <option key={account.id} value={account.id}>
+                      {account.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
 
-            <div className="selectionHintCard compactInfoCard">
-              <h3>{selectedAccount.label}</h3>
-              <p>
-                Questions are filtered by the backend according to this demo
-                profile&apos;s role visibility and clearance.
-              </p>
-              <dl className="detailGrid compactDetailGrid">
-                <div className="detailTile">
-                  <dt>Department role</dt>
-                  <dd>{selectedAccount.department_role || "No team scope"}</dd>
-                </div>
-                <div className="detailTile">
-                  <dt>Clearance</dt>
-                  <dd>{formatClearanceLabel(selectedAccount.clearance)}</dd>
-                </div>
-                <div className="detailTile">
-                  <dt>Access scope</dt>
-                  <dd>{selectedAccessMode}</dd>
-                </div>
-              </dl>
-              <p className="supportingCopy">
-                Access profiles are currently served from{" "}
-                {accountsBackend || "the local proxy"}.
-              </p>
+              <div className="agentMeta" aria-label="Active access context">
+                <span>{selectedRole}</span>
+                <span>{formatClearanceLabel(selectedAccount.clearance)}</span>
+                <span>{selectedAccessMode}</span>
+              </div>
             </div>
 
             <label className="fieldLabel" htmlFor="question">
               Your question
             </label>
             <textarea
-              className="fieldInput fieldTextarea"
+              className="fieldInput fieldTextarea queryTextarea"
               id="question"
               onChange={(event) => setQuestion(event.target.value)}
               rows={5}
               value={question}
             />
 
-            <div className="actionRow">
+            <div className="actionRow queryActionRow">
               <button
                 className="primaryButton"
                 disabled={isLoading || !question.trim()}

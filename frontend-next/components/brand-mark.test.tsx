@@ -35,10 +35,11 @@ test("IntelligenceLogo exposes the full intelligence lockup", () => {
   assert.match(markup, /intelligenceLogoWord/);
 });
 
-test("Home keeps the seven created for lockup with the SIX logo", () => {
+test("Home keeps the created for lockup with the SIX logo", () => {
   const markup = renderToStaticMarkup(<Home />);
 
-  assert.match(markup, /seven created for/);
+  assert.match(markup, />created for</);
+  assert.doesNotMatch(markup, /seven created for/);
   assert.match(markup, /six-logo\.png/);
 });
 
@@ -46,11 +47,14 @@ test("Query page keeps only the minimal centered copy", () => {
   const markup = renderToStaticMarkup(<QueryPage />);
 
   assert.match(markup, /Ask the company knowledge base/);
+  assert.match(markup, /Agent profile/);
   assert.match(markup, /Your question/);
   assert.match(
     markup,
     /Which SIX workflow covers MiFID II product governance questions\?/,
   );
+  assert.doesNotMatch(markup, /Questions are filtered by the backend/);
+  assert.doesNotMatch(markup, /Access profiles are currently served from/);
   assert.doesNotMatch(
     markup,
     /Search across the indexed regulatory, tax, ESG, and reference-data corpus/,
@@ -72,6 +76,9 @@ test("Welcome page keeps only the catalog overview without workspace overview or
   const markup = renderToStaticMarkup(<WelcomePage />);
 
   assert.match(markup, /Catalog Overview/);
+  assert.match(markup, /Knowledge map/);
+  assert.match(markup, /Backend document registry/);
+  assert.match(markup, /Role catalog/);
   assert.match(markup, /0 indexed documents/);
   assert.doesNotMatch(markup, /Workspace overview/);
   assert.doesNotMatch(markup, /Choose a role lens/);

@@ -15,13 +15,13 @@ test("SiteHeader keeps only the intelligence brand on the start page", () => {
   assert.doesNotMatch(markup, /Knowledge live/);
 });
 
-test("SiteHeader shows workspace navigation on internal pages including a start link", () => {
+test("SiteHeader shows workspace navigation on internal pages without a start link", () => {
   const markup = renderToStaticMarkup(
     <SiteHeaderFrame pathname="/welcome" />,
   );
 
   assert.match(markup, /intelligence/);
-  assert.match(markup, />Start</);
+  assert.doesNotMatch(markup, />Start</);
   assert.match(markup, />Welcome</);
   assert.match(markup, />Query</);
   assert.match(markup, />Add files</);
