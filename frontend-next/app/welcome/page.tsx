@@ -1,16 +1,13 @@
 "use client";
 
+import React from "react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
 import { SixLogo } from "../../components/brand-mark";
 import {
   ROLE_CATALOG,
-  countDocumentsForRole,
   getDocumentRoleList,
-  getDocumentOwners,
-  getDocumentSource,
-  getDocumentUpdated,
   getRoleCatalogEntry,
 } from "../../lib/companyBrainPresentation";
 import type {
@@ -49,7 +46,6 @@ export default function WelcomePage() {
     rolesError: null,
     documentsError: null,
   });
-  const [selectedRole, setSelectedRole] = useState("All roles");
 
   useEffect(() => {
     let isMounted = true;
@@ -101,15 +97,6 @@ export default function WelcomePage() {
     ]),
   );
 
-  const filteredDocuments =
-    selectedRole === "All roles"
-      ? state.documents
-      : state.documents.filter((document) =>
-          getDocumentRoleList(document).includes(selectedRole),
-        );
-
-  const liveDocuments = filteredDocuments.slice(0, 4);
-
   return (
     <main className="pageShell landingShell">
       <section className="landingHero">
@@ -131,171 +118,55 @@ export default function WelcomePage() {
           </div>
         </div>
 
-        <div className="heroPanel">
+        <div className="heroPanel cleanHeroPanel">
           <p className="heroPanelLabel">Live workspace snapshot</p>
-          <div className="heroPanelFooter">
-            <span>{state.health?.ok ? "Backend reachable" : "Waiting for backend"}</span>
-            <span>{knownRoles.length} known roles</span>
-            <span>{state.documents.length} stored documents</span>
+
+          <div className="heroSnapshotGrid">
+            <article className="snapshotMetric">
+              <span className="snapshotValue">
+                {state.health?.ok ? "Backend reachable" : "Waiting for backend"}
+              </span>
+              <span className="snapshotLabel">Status</span>
+            </article>
+
+            <article className="snapshotMetric">
+              <span className="snapshotValue">{knownRoles.length}</span>
+              <span className="snapshotLabel">Known roles</span>
+            </article>
+
+            <article className="snapshotMetric snapshotMetricWide">
+              <span className="snapshotValue">{state.documents.length}</span>
+              <span className="snapshotLabel">Stored documents</span>
+            </article>
           </div>
-          <p className="supportingCopy">
-            Roles and documents are loaded through the Next proxy routes, so the UI
-            stays aligned with the updated backend contract.
+
+          <p className="snapshotBody">
+            Source: {state.rolesBackend || state.rolesError || "local proxy"}.
           </p>
-          <div className="heroSponsorLockup">
+
+          <div className="heroSponsorLockup cleanSponsorLockup">
             <span className="supportingCopy">created for</span>
             <SixLogo className="panelSixLogo" />
           </div>
         </div>
       </section>
 
-      <section className="landingSection">
-        <div className="sectionHeading">
-          <p className="eyebrow">Workspace overview</p>
-          <h2>Role ownership is now surfaced directly in the frontend.</h2>
+      <section className="landingSection catalogSection">
+        <div className="sectionHeading catalogHeading">
+          <h2>Catalog Overview</h2>
         </div>
 
-        <div className="workspaceOverviewGrid">
-          <article className="infoTile">
-            <h3>Persistence and health</h3>
-            {state.health ? (
-              <dl className="detailGrid compactDetailGrid">
-                <div className="detailTile">
-                  <dt>Data</dt>
-                  <dd>{state.health.data_dir_exists ? "Ready" : "Missing"}</dd>
-                </div>
-                <div className="detailTile">
-                  <dt>Vectors</dt>
-                  <dd>{state.health.chroma_dir_exists ? "Ready" : "Missing"}</dd>
-                </div>
-                <div className="detailTile">
-                  <dt>Graph</dt>
-                  <dd>{state.health.graph_exists ? "Ready" : "Missing"}</dd>
-                </div>
-              </dl>
-            ) : (
-              <p>{state.healthError || "Health status is loading."}</p>
-            )}
-          </article>
-
-          <article className="infoTile">
-            <h3>How roles are used</h3>
-            <p>
-              The frontend now reflects the shared SIX role catalog, multi-role
-              document ownership, and the same routed-role language used in gap
-              handling and ingest results.
-            </p>
-            <p className="supportingCopy">
-              Current source: {state.rolesBackend || state.rolesError || "repo role catalog"}.
-            </p>
-          </article>
-        </div>
-
-        <div className="sectionHeading roleSectionHeading">
-          <p className="eyebrow">Roles</p>
-          <h2>Choose a role lens or scan the full catalog.</h2>
-        </div>
-
-        <div className="sampleRow" role="tablist" aria-label="Role filters">
-          <button
-            className={`ghostChip${selectedRole === "All roles" ? " active" : ""}`}
-            onClick={() => setSelectedRole("All roles")}
-            type="button"
-          >
-            All roles
-          </button>
-          {knownRoles.map((role) => (
-            <button
-              className={`ghostChip${selectedRole === role ? " active" : ""}`}
-              key={role}
-              onClick={() => setSelectedRole(role)}
-              type="button"
-            >
-              {role}
-            </button>
-          ))}
-        </div>
-
-        <div className="roleCatalogGrid">
+        <div className="roleCatalogGrid cleanCatalogGrid">
           {knownRoles.map((role) => {
             const entry = getRoleCatalogEntry(role);
 
             return (
-              <article className="roleCard" key={role}>
-                <div className="roleCardHeader">
-                  <div>
-                    <p className="eyebrow">Owning role</p>
-                    <h3>{entry.name}</h3>
-                  </div>
-                  <span className="roleCountBadge">
-                    {countDocumentsForRole(state.documents, role)} docs
-                  </span>
-                </div>
+              <article className="roleCard cleanRoleCard" key={role}>
+                <h3>{entry.name}</h3>
                 <p>{entry.description}</p>
-                <div className="tagRow">
-                  {entry.tags.map((tag) => (
-                    <span className="tagChip" key={tag}>
-                      {tag}
-                    </span>
-                  ))}
-                </div>
               </article>
             );
           })}
-        </div>
-
-        <div className="sectionHeading roleSectionHeading">
-          <p className="eyebrow">Documents</p>
-          <h2>
-            {selectedRole === "All roles"
-              ? "Recent indexed material"
-              : `Recent material tagged for ${selectedRole}`}
-          </h2>
-        </div>
-
-        <div className="documentListCompact">
-          {liveDocuments.length ? (
-            liveDocuments.map((document) => (
-              <article className="compactDocumentCard" key={getDocumentSource(document)}>
-                <div className="documentCardHeader">
-                  <div>
-                    <p className="eyebrow">Indexed document</p>
-                    <h3>{getDocumentSource(document)}</h3>
-                  </div>
-                  <span className="documentModeBadge">
-                    {document.modality || "document"}
-                  </span>
-                </div>
-                <p>
-                  Owned by {getDocumentOwners(document)} with {document.chunks ?? "unknown"}{" "}
-                  chunks.
-                </p>
-                <div className="tagRow">
-                  {getDocumentRoleList(document).length ? (
-                    getDocumentRoleList(document).map((role) => (
-                      <span className="subtleRoleChip" key={`${getDocumentSource(document)}-${role}`}>
-                        {role}
-                      </span>
-                    ))
-                  ) : (
-                    <span className="subtleRoleChip">Unassigned</span>
-                  )}
-                </div>
-                <div className="documentMetaRow">
-                  <span>Updated {getDocumentUpdated(document)}</span>
-                </div>
-              </article>
-            ))
-          ) : (
-            <article className="emptyState">
-              <p className="eyebrow">Documents</p>
-              <h3>No document records loaded</h3>
-              <p>
-                {state.documentsError ||
-                  "Upload a file or switch the role lens once document records are available."}
-              </p>
-            </article>
-          )}
         </div>
       </section>
     </main>

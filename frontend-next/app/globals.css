@@ -589,6 +589,11 @@ h4 {
     linear-gradient(135deg, rgba(215, 25, 45, 0.12), transparent 60%);
 }
 
+.cleanHeroPanel {
+  align-content: space-between;
+  gap: 1.45rem;
+}
+
 .heroPanelLabel {
   font-size: 0.92rem;
   font-weight: 700;
@@ -621,16 +626,66 @@ h4 {
   font-size: 0.88rem;
 }
 
+.heroSnapshotGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.9rem;
+}
+
+.snapshotMetric {
+  display: grid;
+  gap: 0.22rem;
+  min-height: 6.6rem;
+  padding: 1.05rem 1.15rem;
+  border: 1px solid rgba(66, 30, 36, 0.08);
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.74);
+}
+
+.snapshotMetricWide {
+  grid-column: 1 / -1;
+}
+
+.snapshotValue {
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-size: 1.08rem;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1.25;
+}
+
+.snapshotLabel {
+  color: var(--muted);
+  font-size: 0.82rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.snapshotBody {
+  color: var(--muted);
+  font-size: 0.96rem;
+  line-height: 1.55;
+}
+
 .landingSection {
   margin-top: 1.4rem;
   padding: 1.85rem;
   border-radius: 32px;
 }
 
+.catalogSection {
+  padding-top: 1.65rem;
+}
+
 .sectionHeading {
   display: grid;
   gap: 0.55rem;
   max-width: 44rem;
+}
+
+.catalogHeading {
+  max-width: none;
 }
 
 .featureGrid,
@@ -713,6 +768,11 @@ h4 {
   gap: 1rem;
   flex-wrap: wrap;
   isolation: isolate;
+}
+
+.cleanSponsorLockup {
+  padding-top: 0.2rem;
+  border-top: 1px solid rgba(66, 30, 36, 0.08);
 }
 
 .panelSixLogo {
@@ -1006,6 +1066,11 @@ h4 {
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
+.cleanCatalogGrid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin-top: 1rem;
+}
+
 .documentListCompact {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
@@ -1019,6 +1084,11 @@ h4 {
 .roleCard {
   display: grid;
   gap: 0.9rem;
+}
+
+.cleanRoleCard {
+  gap: 0.75rem;
+  background: rgba(255, 253, 252, 0.84);
 }
 
 .roleCardHeader,
@@ -1122,11 +1192,13 @@ h4 {
   .workspaceOverviewGrid,
   .roleGrid,
   .roleCatalogGrid,
+  .cleanCatalogGrid,
   .documentGrid,
   .documentListCompact,
   .detailGrid,
   .insightGrid,
-  .infoStrip {
+  .infoStrip,
+  .heroSnapshotGrid {
     grid-template-columns: 1fr;
   }
 }

@@ -6,6 +6,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import Home from "../app/page";
 import QueryPage from "../app/query/page";
 import UploadPage from "../app/upload/page";
+import WelcomePage from "../app/welcome/page";
 import { BrandMark, IntelligenceLogo, SixLogo } from "./brand-mark";
 
 test("BrandMark renders the intelligence wordmark and a robot mark", () => {
@@ -46,6 +47,10 @@ test("Query page keeps only the minimal centered copy", () => {
 
   assert.match(markup, /Ask the company knowledge base/);
   assert.match(markup, /Your question/);
+  assert.match(
+    markup,
+    /Which SIX workflow covers MiFID II product governance questions\?/,
+  );
   assert.doesNotMatch(
     markup,
     /Search across the indexed regulatory, tax, ESG, and reference-data corpus/,
@@ -61,4 +66,13 @@ test("Upload page removes the long explanatory intro copy", () => {
     markup,
     /Upload reference documents so the backend can extract text, create chunks/,
   );
+});
+
+test("Welcome page keeps only the catalog overview without workspace overview or role selector", () => {
+  const markup = renderToStaticMarkup(<WelcomePage />);
+
+  assert.match(markup, /Catalog Overview/);
+  assert.doesNotMatch(markup, /Workspace overview/);
+  assert.doesNotMatch(markup, /Choose a role lens/);
+  assert.doesNotMatch(markup, /All roles/);
 });

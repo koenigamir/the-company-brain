@@ -8,8 +8,11 @@ import { QueryAnswerPanel } from "../../components/query-answer-panel";
 import { buildGapTicketRequest } from "../../lib/companyBrainPresentation";
 import type { CompanyBrainAnswer } from "../../types/companyBrain";
 
+const SAMPLE_QUESTION =
+  "Which SIX workflow covers MiFID II product governance questions?";
+
 export default function QueryPage() {
-  const [question, setQuestion] = useState("");
+  const [question, setQuestion] = useState(SAMPLE_QUESTION);
   const [answer, setAnswer] = useState<CompanyBrainAnswer | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);

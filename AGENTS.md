@@ -29,6 +29,14 @@ Use this structure for new entries:
 
 ## Current Log
 
+### 2026-05-31 - Welcome Catalog Reduced And Cleaned
+
+- Context: The welcome page still had a visually messy live snapshot area plus too much secondary structure around roles.
+- Actions: Added a frontend regression test for the reduced welcome layout, rebuilt the welcome page around a cleaner snapshot card, removed the full workspace-overview block, removed the role selector and document list from welcome, and kept only a simplified catalog of roles with descriptions.
+- Changes made: `frontend-next/app/welcome/page.tsx` now shows a cleaner aligned snapshot panel and a single `Catalog Overview` section; `frontend-next/app/globals.css` now styles the new snapshot-card grid and simplified catalog cards; frontend tests/build were rerun successfully.
+- Risks / open questions: The welcome page is now intentionally much more minimal, so any future request to reintroduce document visibility there should be treated as a fresh design choice rather than assumed behavior.
+- Next agent: Keep `/welcome` focused on entry and catalog scanning unless the product direction explicitly asks for richer live operational detail again.
+
 ### 2026-05-31 - Branding And Copy Simplified Further
 
 - Context: The frontend still needed finer visual tuning on the hero branding plus a more stripped-back query/upload presentation.
