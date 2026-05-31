@@ -29,6 +29,14 @@ Use this structure for new entries:
 
 ## Current Log
 
+### 2026-05-31 - Welcome Catalogue UI Follow-Up
+
+- Context: User reported the welcome page repeated workspace snapshot information and that the catalogue/access-ready document UI still needed to be more user-friendly.
+- Actions: Removed the duplicate live workspace snapshot panel from the welcome hero, kept the catalogue map as the single overview of document and role counts, simplified the frontend data loading to roles/documents only, and rechecked the welcome page locally.
+- Changes made: `frontend-next/app/welcome/page.tsx` now has a single-column intro, an ownership-focused `Catalog Overview`, compact source-owner cards, and access-ready document fact cards with decoded filenames; `frontend-next/lib/companyBrainPresentation.ts` now exposes `getDocumentDisplayName`; `frontend-next/app/globals.css` and frontend tests were updated for the revised layout.
+- Risks / open questions: Local browser verification still showed backend proxy `502` responses because no reachable backend environment was configured here; empty/fallback states rendered.
+- Next agent: Keep `/welcome` focused on one overview source of truth; avoid reintroducing a second workspace snapshot unless the catalogue map is removed.
+
 ### 2026-05-31 - Frontend Refresh
 
 - Context: User requested a frontend-only cleanup on branch `frontend` for the splash copy, query UI, welcome/catalogue overview, access-ready documents, and top navigation.

@@ -10,6 +10,7 @@ import {
   getConfidenceTone,
   getDocumentRoleList,
   getDocumentOwners,
+  getDocumentDisplayName,
   getDocumentSource,
   getDocumentTypeLabel,
   getDocumentUpdatedLabel,
@@ -151,6 +152,12 @@ test("document helpers favor canonical backend document fields", () => {
 });
 
 test("document display helpers make backend metadata readable", () => {
+  assert.equal(
+    getDocumentDisplayName({
+      source_file: "20251217%20FinDatEx%20-%20EMT%20V4.3.xlsx",
+    }),
+    "20251217 FinDatEx - EMT V4.3.xlsx",
+  );
   assert.equal(
     getDocumentUpdatedLabel({
       source_file: "emt.xlsx",

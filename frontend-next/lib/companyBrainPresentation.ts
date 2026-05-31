@@ -196,6 +196,15 @@ export function getDocumentSource(document: CompanyBrainDocument): string {
   );
 }
 
+export function getDocumentDisplayName(document: CompanyBrainDocument): string {
+  const source = getDocumentSource(document);
+  try {
+    return decodeURIComponent(source);
+  } catch {
+    return source.replace(/%20/g, " ");
+  }
+}
+
 export function getDocumentRoleList(document: CompanyBrainDocument): string[] {
   if (document.role_owners?.length) {
     return document.role_owners;

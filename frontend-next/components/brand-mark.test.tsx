@@ -79,7 +79,12 @@ test("Welcome page keeps only the catalog overview without workspace overview or
   assert.match(markup, /Knowledge map/);
   assert.match(markup, /Backend document registry/);
   assert.match(markup, /Role catalog/);
+  assert.match(markup, /Source owners/);
+  assert.match(markup, /Documents are grouped by owner so teams can see what they maintain/);
+  assert.match(markup, /Access-Ready Documents/);
+  assert.match(markup, /Recent indexed files with their owner and access level/);
   assert.match(markup, /0 indexed documents/);
+  assert.doesNotMatch(markup, /Live workspace snapshot/);
   assert.doesNotMatch(markup, /Workspace overview/);
   assert.doesNotMatch(markup, /Choose a role lens/);
   assert.doesNotMatch(markup, /All roles/);
