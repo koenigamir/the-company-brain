@@ -252,10 +252,24 @@ def get_chroma_store() -> Chroma:
     )
 
 
+def apply_access_metadata(
+    docs: list[Document],
+    visibility_roles: list[str],
+    min_clearance: str,
+) -> list[Document]:
+    visibility_value = ", ".join(visibility_roles)
+    for doc in docs:
+        doc.metadata["visibility_roles"] = visibility_value
+        doc.metadata["min_clearance"] = min_clearance
+    return docs
+
+
 def add_file_to_brain(
     file_bytes: bytes,
     filename: str,
     role_owner: str | None = None,
+    visibility_roles=None,
+    min_clearance: str | None = None,
     save_to_data_dir: bool = True,
 ) -> dict:
     """
@@ -323,6 +337,19 @@ def add_file_to_brain(
             role_owners = resolved.get("roles") or [role_owner]
             role_reason = resolved["reason"]
 
+        import store
+
+        access = store.normalize_document_access(
+            source_file=filename,
+            role_owner=role_owner,
+            role_owners=role_owners,
+            visibility_roles=visibility_roles,
+            min_clearance=min_clearance,
+        )
+        role_owners = access["role_owners"] or [role_owner]
+        visibility_roles = access["visibility_roles"]
+        min_clearance = access["min_clearance"]
+
         last_updated = file_modified_iso(parse_path)
         if segments is not None:
             docs = segments_to_documents(
@@ -374,6 +401,7 @@ def add_file_to_brain(
         owners_str = ", ".join(role_owners)
         for d in docs:
             d.metadata["role_owners"] = owners_str
+        apply_access_metadata(docs, visibility_roles, min_clearance)
     finally:
         if not save_to_data_dir:
             os.unlink(parse_path)
@@ -400,8 +428,6 @@ def add_file_to_brain(
 
     # Persist the document ownership record (Supabase or local fallback).
     try:
-        import store
-
         store.upsert_document(
             filename,
             role,
@@ -409,6 +435,8 @@ def add_file_to_brain(
             len(docs),
             modality=modality,
             role_owners=role_owners,
+            visibility_roles=visibility_roles,
+            min_clearance=min_clearance,
         )
     except Exception:
         pass

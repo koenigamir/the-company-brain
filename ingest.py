@@ -6,6 +6,7 @@ from langchain_chroma import Chroma
 
 import graph_engine
 import knowledge_ops
+import store
 
 DATA_DIR = knowledge_ops.DATA_DIR
 CHROMA_DIR = knowledge_ops.CHROMA_DIR
@@ -30,10 +31,38 @@ def main():
             print(f"SKIP  (unreadable): {filename}")
             continue
 
+        role_owner = docs[0].metadata.get("role_owner", "Unassigned")
+        access = store.normalize_document_access(
+            source_file=filename,
+            role_owner=role_owner,
+            role_owners=docs[0].metadata.get("role_owners"),
+            visibility_roles=docs[0].metadata.get("visibility_roles"),
+            min_clearance=docs[0].metadata.get("min_clearance"),
+        )
+        knowledge_ops.apply_access_metadata(
+            docs,
+            access["visibility_roles"],
+            access["min_clearance"],
+        )
+        owners_str = ", ".join(access["role_owners"] or [role_owner])
+        for doc in docs:
+            doc.metadata["role_owners"] = owners_str
+
+        store.upsert_document(
+            filename,
+            role_owner,
+            docs[0].metadata.get("last_updated"),
+            len(docs),
+            modality=docs[0].metadata.get("source_modality", "document"),
+            role_owners=access["role_owners"],
+            visibility_roles=access["visibility_roles"],
+            min_clearance=access["min_clearance"],
+        )
+
         all_docs.extend(docs)
         print(
             f"OK    {filename}: {len(docs)} chunks  ->  "
-            f"{docs[0].metadata['role_owner']}"
+            f"{role_owner}"
         )
 
     print(f"\nTotal chunks: {len(all_docs)}")

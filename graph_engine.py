@@ -51,7 +51,7 @@ ENTITIES = {
     },
     "EU Taxonomy / ESG": {
         "type": "Regulation",
-        "keywords": ["esg", "taxonomy", "jc_2021_50", "sustainab"],
+        "keywords": ["esg", "taxonomy", "jc_2021_50", "sustainab*"],
     },
     "FATCA": {
         "type": "Regulation",
@@ -100,9 +100,16 @@ RELATIONS = [
 # Pre-compile a word-boundary regex per entity. Word boundaries stop short
 # acronyms (eet, emt, esg) from matching inside unrelated words such as
 # "facsheet", "system", or "spreadsheet".
+def _compile_keyword_pattern(keyword: str) -> str:
+    if keyword.endswith("*"):
+        stem = re.escape(keyword[:-1])
+        return r"\b" + stem + r"\w*\b"
+    return r"\b" + re.escape(keyword) + r"\b"
+
+
 _ENTITY_PATTERNS = {
     name: re.compile(
-        "|".join(r"\b" + re.escape(kw) + r"\b" for kw in spec["keywords"]),
+        "|".join(_compile_keyword_pattern(kw) for kw in spec["keywords"]),
         re.IGNORECASE,
     )
     for name, spec in ENTITIES.items()

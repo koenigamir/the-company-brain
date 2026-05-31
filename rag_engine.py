@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import datetime
 import re
 from collections import Counter
@@ -115,6 +117,10 @@ Answering style:
 - Only fill 'detailed_answer' when the topic genuinely needs more depth
   (definitions, multi-part questions, step-by-step, nuanced regulation). If the
   short answer is enough, leave 'detailed_answer' as an empty string.
+- 'detailed_answer' must use only simple Markdown:
+  short paragraphs, '-' bullets, and optional '**bold**'.
+- Do NOT use tables, heading markers, LaTeX/math delimiters, fenced code blocks,
+  or HTML in 'detailed_answer'.
 
 Sources and knowledge:
 - PREFER the provided company context. Ground your answer in it as much as possible.
@@ -237,10 +243,16 @@ def add_file_to_brain(
     file_bytes: bytes,
     filename: str,
     role_owner: Optional[str] = None,
+    visibility_roles: Optional[list[str]] = None,
+    min_clearance: Optional[str] = None,
 ) -> dict:
     """Ingest an uploaded file into Chroma + graph; invalidate query caches."""
     result = knowledge_ops.add_file_to_brain(
-        file_bytes, filename, role_owner=role_owner
+        file_bytes,
+        filename,
+        role_owner=role_owner,
+        visibility_roles=visibility_roles,
+        min_clearance=min_clearance,
     )
     if result.get("ok"):
         reset_caches()
@@ -277,23 +289,125 @@ def _dedupe(docs, limit):
     return [best[k] for k in order[:limit]]
 
 
-def _source_catalog() -> Dict[str, dict]:
-    """source_file -> {chunks, modality} from the document store."""
+def _source_catalog(graph: dict | None = None) -> Dict[str, dict]:
+    """source_file -> normalized document row from store rows plus graph fallback."""
+    catalog: Dict[str, dict] = {}
     try:
-        return {
-            d["source_file"]: {
-                "chunks": int(d.get("chunks") or 999),
-                "modality": d.get("modality") or "document",
-            }
-            for d in store.list_documents()
-        }
+        for row in store.list_documents():
+            source_file = row.get("source_file")
+            if source_file:
+                catalog[source_file] = store.normalize_document_row(row)
     except Exception:
-        return {}
+        pass
+
+    graph_docs = (graph or {}).get("documents", {})
+    for source_file, meta in graph_docs.items():
+        if source_file in catalog:
+            continue
+        role_owner = (meta or {}).get("role_owner")
+        catalog[source_file] = store.normalize_document_row(
+            {
+                "source_file": source_file,
+                "role_owner": role_owner,
+                "role_owners": [role_owner] if role_owner else [],
+            }
+        )
+    return catalog
+
+
+def _document_row_for_source(source_file: str, catalog: dict, metadata=None) -> dict:
+    row = catalog.get(source_file)
+    if row is not None:
+        return row
+    metadata = metadata or {}
+    return store.normalize_document_row(
+        {
+            "source_file": source_file,
+            "role_owner": metadata.get("role_owner"),
+            "role_owners": metadata.get("role_owners"),
+            "visibility_roles": metadata.get("visibility_roles"),
+            "min_clearance": metadata.get("min_clearance"),
+        }
+    )
+
+
+def _doc_is_visible(doc: Document, viewer_account: dict, catalog: dict) -> bool:
+    source_file = doc.metadata.get("source_file")
+    if not source_file:
+        return False
+    row = _document_row_for_source(source_file, catalog, metadata=doc.metadata)
+    return store.document_is_visible(row, viewer_account)
+
+
+def _file_is_visible(source_file: str, viewer_account: dict, catalog: dict) -> bool:
+    row = _document_row_for_source(source_file, catalog)
+    return store.document_is_visible(row, viewer_account)
+
+
+def _partition_docs_by_access(docs, viewer_account: dict, catalog: dict):
+    allowed = []
+    blocked_files = set()
+    for doc in docs:
+        if _doc_is_visible(doc, viewer_account, catalog):
+            allowed.append(doc)
+            continue
+        source_file = doc.metadata.get("source_file")
+        if source_file:
+            blocked_files.add(source_file)
+    return allowed, blocked_files
+
+
+def _partition_files_by_access(files, viewer_account: dict, catalog: dict):
+    allowed = []
+    blocked = set()
+    for source_file in files:
+        if not source_file:
+            continue
+        if _file_is_visible(source_file, viewer_account, catalog):
+            allowed.append(source_file)
+        else:
+            blocked.add(source_file)
+    return allowed, blocked
+
+
+def _visible_file_sets(catalog: dict, viewer_account: dict):
+    if not catalog:
+        return None, set()
+    allowed = []
+    blocked = set()
+    for source_file, row in catalog.items():
+        if store.document_is_visible(row, viewer_account):
+            allowed.append(source_file)
+        else:
+            blocked.add(source_file)
+    return allowed, blocked
+
+
+def _source_filter(source_files):
+    if source_files is None:
+        return None
+    if not source_files:
+        return {"source_file": {"$in": []}}
+    if len(source_files) == 1:
+        return {"source_file": source_files[0]}
+    return {"source_file": {"$in": source_files}}
+
+
+def _similarity_search(chroma_store, question: str, k: int, source_files=None):
+    if source_files is not None and not source_files:
+        return []
+    try:
+        filter_arg = _source_filter(source_files)
+        if filter_arg is None:
+            return chroma_store.similarity_search(question, k=k)
+        return chroma_store.similarity_search(question, k=k, filter=filter_arg)
+    except Exception:
+        return []
 
 
 def _file_chunk_count(chroma_store, fname: str, catalog: dict) -> int:
     if fname in catalog:
-        return catalog[fname]["chunks"]
+        return int(catalog[fname].get("chunks") or 999)
     try:
         data = chroma_store.get(where={"source_file": fname}, include=[])
         return len(data.get("ids") or [])
@@ -365,18 +479,22 @@ def _keyword_tokens(question: str) -> list[str]:
     return out[:4]
 
 
-def _keyword_hits(chroma_store, question: str) -> list[Document]:
+def _keyword_hits(chroma_store, question: str, source_files=None) -> list[Document]:
     """Literal substring lookup for exact symbols (e.g. ABBN, 83.62 rows).
 
     Vector similarity averages a long table chunk across all its rows, so a
     single-ticker query ranks it low. An exact-text search on chunk content
     surfaces the right chunk regardless of embedding rank.
     """
+    if source_files is not None and not source_files:
+        return []
     hits: list[Document] = []
     seen: set[str] = set()
     for tok in _keyword_tokens(question):
         try:
+            filter_arg = _source_filter(source_files)
             data = chroma_store.get(
+                where=filter_arg,
                 where_document={"$contains": tok},
                 include=["documents", "metadatas"],
                 limit=KEYWORD_SEARCH_K,
@@ -503,29 +621,51 @@ def send_gap_ticket(question: str, gap: dict, body: str, missing_topics=None) ->
     return tickets
 
 
-def hybrid_retrieve(question, k_vector=5, k_graph=6, max_context=10):
+def hybrid_retrieve(
+    question,
+    viewer_account_id: str | None = "standard-employee",
+    k_vector=5,
+    k_graph=6,
+    max_context=10,
+):
     chroma = _get_store()
     graph = _get_graph()
-    catalog = _source_catalog()
+    catalog = _source_catalog(graph)
+    viewer_account = store.get_demo_account(viewer_account_id)
+    allowed_files, blocked_catalog_files = _visible_file_sets(catalog, viewer_account)
 
-    seed = chroma.similarity_search(question, k=k_vector)
+    seed = _similarity_search(chroma, question, k_vector, allowed_files)
     seed_files = {d.metadata.get("source_file") for d in seed}
+    blocked_seed = _similarity_search(
+        chroma, question, k_vector, sorted(blocked_catalog_files)
+    )
+    blocked_files = {
+        d.metadata.get("source_file")
+        for d in blocked_seed
+        if d.metadata.get("source_file")
+    }
 
     detected = graph_engine.detect_entities(question)
     expanded = graph_engine.expand_entities(detected)
     candidate_files = graph_engine.documents_for_entities(graph, expanded)
 
     new_files = [f for f in candidate_files if f not in seed_files]
+    allowed_new_files, blocked_graph_files = _partition_files_by_access(
+        new_files, viewer_account, catalog
+    )
+    blocked_files |= blocked_graph_files
 
     graph_hits = []
-    if new_files:
-        graph_hits = chroma.similarity_search(
-            question,
-            k=k_graph,
-            filter={"source_file": {"$in": new_files}},
-        )
+    if allowed_new_files:
+        graph_hits = _similarity_search(chroma, question, k_graph, allowed_new_files)
 
-    keyword_hits = _keyword_hits(chroma, question)
+    keyword_hits = _keyword_hits(chroma, question, allowed_files)
+    blocked_keyword_hits = _keyword_hits(chroma, question, sorted(blocked_catalog_files))
+    blocked_files |= {
+        d.metadata.get("source_file")
+        for d in blocked_keyword_hits
+        if d.metadata.get("source_file")
+    }
     merged = _dedupe(seed + graph_hits + keyword_hits, max_context)
 
     matched_files = {d.metadata.get("source_file") for d in merged} - {None}
@@ -543,7 +683,44 @@ def hybrid_retrieve(question, k_vector=5, k_graph=6, max_context=10):
         "graph_added_files": added_files,
         "used_graph": bool(detected) and bool(added_files),
     }
-    return merged, debug
+    access = {
+        "viewer_account": viewer_account,
+        "restricted_files": sorted(blocked_files),
+    }
+    return merged, debug, access
+
+
+def _sanitize_detailed_answer(text: str) -> str:
+    text = (text or "").replace("\r\n", "\n")
+    if not text.strip():
+        return ""
+
+    text = text.replace("\\(", "").replace("\\)", "")
+    text = text.replace("\\[", "").replace("\\]", "")
+    text = re.sub(r"\$(.+?)\$", r"\1", text, flags=re.DOTALL)
+
+    lines = []
+    for raw_line in text.splitlines():
+        line = re.sub(r"^\s{0,3}#+\s*", "", raw_line).strip()
+        if not line or line == "```":
+            lines.append("")
+            continue
+        if "|" in line and line.count("|") >= 2:
+            cells = [cell.strip() for cell in line.strip("|").split("|")]
+            if not any(cells):
+                continue
+            if all(set(cell) <= {"-", ":"} for cell in cells if cell):
+                continue
+            if len(cells) == 2:
+                lines.append(f"- {cells[0]}: {cells[1]}")
+            else:
+                lines.append("- " + " | ".join(cells))
+            continue
+        lines.append(line)
+
+    cleaned = "\n".join(lines)
+    cleaned = re.sub(r"\n{3,}", "\n\n", cleaned)
+    return cleaned.strip()
 
 
 def _history_text(history) -> str:
@@ -604,13 +781,21 @@ def _format_context(docs) -> str:
     return "\n\n".join(blocks)
 
 
-def query_brain(question: str, history=None) -> dict:
+def query_brain(
+    question: str,
+    history=None,
+    viewer_account_id: str | None = "standard-employee",
+) -> dict:
     """Answer a question (or follow-up) using company context + LLM knowledge.
 
     ``history`` is an optional list of {"role", "content"} turns so follow-up
     questions stay in context. Retrieval runs fresh on every turn.
     """
-    docs, graph_debug = hybrid_retrieve(_retrieval_query(question, history))
+    viewer_account = store.get_demo_account(viewer_account_id)
+    docs, graph_debug, access_debug = hybrid_retrieve(
+        _retrieval_query(question, history),
+        viewer_account_id=viewer_account["id"],
+    )
     context = _format_context(docs) if docs else "(no company context retrieved)"
 
     result: WikiPage = (_prompt | _structured_llm).invoke(
@@ -628,12 +813,30 @@ def query_brain(question: str, history=None) -> dict:
     out = result.model_dump()
     out["last_updated_dates"] = last_updated_dates
     out["graph"] = graph_debug
+    out["viewer_account"] = viewer_account
+    out["restricted_source_count"] = len(access_debug.get("restricted_files", []))
+    out["access_notice"] = None
+    if docs and out["restricted_source_count"]:
+        out["access_notice"] = (
+            "Some relevant company information was omitted due to this demo account's access level."
+        )
+    elif not docs and out["restricted_source_count"]:
+        out["access_notice"] = (
+            "Relevant company information exists but is restricted for this demo account."
+        )
+    out["detailed_answer"] = _sanitize_detailed_answer(out.get("detailed_answer", ""))
     if not out.get("role_owner") and docs:
         out["role_owner"] = docs[0].metadata.get("role_owner", DEFAULT_ROLE)
 
+    allowed_sources = []
+    for source in out.get("sources") or []:
+        if source in {d.metadata.get("source_file") for d in docs} and source not in allowed_sources:
+            allowed_sources.append(source)
+    out["sources"] = allowed_sources
+
     is_low = out.get("confidence") == "Low"
     # Route + pre-write a gap ticket for full misses (Low) and partial gaps.
-    if is_low or out.get("gap_required"):
+    if (is_low or out.get("gap_required")) and not out["restricted_source_count"]:
         gap = route_gap(
             question, docs, graph_debug, focus_topics=out.get("missing_topics")
         )
@@ -643,6 +846,9 @@ def query_brain(question: str, history=None) -> dict:
         )
         if is_low or not out.get("role_owner"):
             out["role_owner"] = gap["routed_to"]
+    elif out["restricted_source_count"]:
+        out["gap_required"] = False
+        out["missing_topics"] = []
 
     if not out.get("role_owner"):
         out["role_owner"] = DEFAULT_ROLE

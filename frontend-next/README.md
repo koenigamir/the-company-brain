@@ -20,7 +20,7 @@ Those routes run on the Next.js server and proxy to the FastAPI backend configur
 As of 2026-05-31, the migrated AWS backend is live at:
 
 ```text
-http://63.176.100.250:8000
+http://18.197.151.233:8000
 ```
 
 The IP is an ECS task public IP and can change after a restart or redeploy. For local work, copy `.env.local.example` to `.env.local` and set the current backend URL there.
@@ -38,7 +38,7 @@ npm run dev
 Set `.env.local`:
 
 ```text
-COMPANY_BRAIN_API_URL=http://63.176.100.250:8000
+COMPANY_BRAIN_API_URL=http://18.197.151.233:8000
 ```
 
 Open:
@@ -55,7 +55,7 @@ http://localhost:3000
 - Server-side environment variable:
 
 ```text
-COMPANY_BRAIN_API_URL=http://63.176.100.250:8000
+COMPANY_BRAIN_API_URL=http://18.197.151.233:8000
 ```
 
 Do not use `NEXT_PUBLIC_COMPANY_BRAIN_API_URL`. The backend URL belongs on the server side, not in browser code.
@@ -88,11 +88,36 @@ Do not use `NEXT_PUBLIC_COMPANY_BRAIN_API_URL`. The backend URL belongs on the s
 }
 ```
 
+`GET /demo-accounts` returns:
+
+```ts
+{
+  accounts: Array<{
+    id: string;
+    label: string;
+    department_role: string | null;
+    clearance: "intern" | "standard" | "senior" | string;
+    global_access: boolean;
+  }>;
+  backend: "local" | "supabase" | string;
+}
+```
+
 `GET /documents` returns:
 
 ```ts
 {
-  documents: Array<Record<string, unknown>>;
+  documents: Array<{
+    source_file: string;
+    role_owner: string;
+    role_owners: string[];
+    visibility_roles: string[];
+    min_clearance: "intern" | "standard" | "senior" | string;
+    last_updated?: string;
+    updated_at?: string;
+    chunks?: number;
+    modality?: string;
+  }>;
 }
 ```
 
@@ -102,16 +127,43 @@ Do not use `NEXT_PUBLIC_COMPANY_BRAIN_API_URL`. The backend URL belongs on the s
 {
   question: string;
   history?: Array<Record<string, string>>;
+  viewer_account_id?: string;
 }
 ```
 
-It returns `CompanyBrainAnswer` from `types/companyBrain.ts`, including `short_answer`, `detailed_answer`, `sources`, `role_owner`, `gap_required`, `missing_topics`, `gap_ticket_draft`, and graph debug metadata.
+It returns `CompanyBrainAnswer` from `types/companyBrain.ts`, plus newly deployed access fields:
+
+```ts
+{
+  viewer_account?: {
+    id: string;
+    label: string;
+    department_role: string | null;
+    clearance: "intern" | "standard" | "senior" | string;
+    global_access: boolean;
+  };
+  access_notice?: string | null;
+  restricted_source_count?: number;
+}
+```
+
+`detailed_answer` is still a single string, but the backend now normalizes it to simple Markdown-safe text:
+
+- short paragraphs
+- `-` bullets
+- optional `**bold**`
+- no tables
+- no heading markers intended for rendering
+- no LaTeX math delimiters
+- no fenced code blocks
 
 `POST /ingest` accepts multipart form data:
 
 ```text
 file=<document/image/audio/video>
 role_owner=<optional role name>
+visibility_roles=<optional repeated role name or ALL>
+min_clearance=<optional intern|standard|senior>
 ```
 
 `POST /gap-ticket` accepts:
@@ -119,7 +171,7 @@ role_owner=<optional role name>
 ```ts
 {
   question: string;
-  gap: string;
+  gap: Record<string, unknown>;
   body?: string;
   missing_topics?: string[];
 }
@@ -148,3 +200,16 @@ The checked-in UI is a functional developer workspace, not the final product des
 - gap ticket creation.
 
 Frontend developers should build the polished product UI on top of this contract without bypassing the proxy routes.
+
+## Backend Changes Deployed On 2026-05-31
+
+The backend contract changed after the original frontend handoff:
+
+- Demo accounts are now backend-seeded and available through `GET /demo-accounts`.
+- Query requests can now carry `viewer_account_id`.
+- Query responses now include `viewer_account`, `access_notice`, and `restricted_source_count`.
+- Document records now expose `visibility_roles` and `min_clearance`.
+- Upload ingest now accepts optional access metadata.
+- The long-answer field is cleaner for frontend display and no longer emits table/LaTeX-heavy formatting.
+
+The currently checked-in frontend code does **not** consume all of those additions yet. Read [FRONTEND_AGENT_HANDOFF_2026-05-31.md](/private/tmp/the-company-brain-push-2/frontend-next/FRONTEND_AGENT_HANDOFF_2026-05-31.md) before making frontend changes.

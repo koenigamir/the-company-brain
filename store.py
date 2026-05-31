@@ -1,4 +1,4 @@
-"""Persistence layer for roles, gap tickets, and document records.
+"""Persistence layer for roles, gap tickets, demo accounts, and documents.
 
 Local-first: data lives in ./localstore/*.json by default.
 
@@ -77,9 +77,174 @@ SIX_ROLE_CATALOG = [
 # Backwards-compatible alias used by older seeding logic.
 DEFAULT_ROLES = SIX_ROLE_CATALOG
 
+DEMO_ACCOUNTS = [
+    {
+        "id": "intern-general",
+        "label": "Intern",
+        "department_role": None,
+        "clearance": "intern",
+        "global_access": False,
+    },
+    {
+        "id": "standard-employee",
+        "label": "Standard Employee",
+        "department_role": None,
+        "clearance": "standard",
+        "global_access": False,
+    },
+    {
+        "id": "senior-leader",
+        "label": "Senior Leader",
+        "department_role": None,
+        "clearance": "senior",
+        "global_access": True,
+    },
+    {
+        "id": "esg-compliance-senior",
+        "label": "ESG Compliance Senior",
+        "department_role": "ESG Compliance",
+        "clearance": "senior",
+        "global_access": False,
+    },
+    {
+        "id": "master-data-ops-senior",
+        "label": "Master Data Ops Senior",
+        "department_role": "Master Data Ops",
+        "clearance": "senior",
+        "global_access": False,
+    },
+    {
+        "id": "tax-team-senior",
+        "label": "Tax Team Senior",
+        "department_role": "Tax Team",
+        "clearance": "senior",
+        "global_access": False,
+    },
+    {
+        "id": "regulatory-services-senior",
+        "label": "Regulatory Services Senior",
+        "department_role": "Regulatory Services",
+        "clearance": "senior",
+        "global_access": False,
+    },
+    {
+        "id": "product-coverage-onboarding-senior",
+        "label": "Product Coverage & Onboarding Senior",
+        "department_role": "Product Coverage & Onboarding",
+        "clearance": "senior",
+        "global_access": False,
+    },
+    {
+        "id": "compliance-sanctions-senior",
+        "label": "Compliance & Sanctions Senior",
+        "department_role": "Compliance & Sanctions",
+        "clearance": "senior",
+        "global_access": False,
+    },
+]
+
+_CLEARANCE_RANK = {"intern": 0, "standard": 1, "senior": 2}
+
 
 def catalog_names() -> list[str]:
     return [r["name"] for r in SIX_ROLE_CATALOG]
+
+
+def list_demo_accounts() -> list[dict]:
+    return [dict(account) for account in DEMO_ACCOUNTS]
+
+
+def get_demo_account(account_id: str | None) -> dict:
+    wanted = (account_id or "").strip().lower()
+    for account in DEMO_ACCOUNTS:
+        if account["id"].lower() == wanted:
+            return dict(account)
+    return dict(next(account for account in DEMO_ACCOUNTS if account["id"] == "standard-employee"))
+
+
+def clearance_rank(clearance: str | None) -> int:
+    return _CLEARANCE_RANK.get((clearance or "").strip().lower(), _CLEARANCE_RANK["standard"])
+
+
+def _normalize_role_list(value, fallback=None) -> list[str]:
+    if isinstance(value, list):
+        items = value
+    elif isinstance(value, str):
+        items = [part.strip() for part in value.split(",")]
+    else:
+        items = fallback or []
+
+    out = []
+    for item in items:
+        cleaned = (item or "").strip()
+        if not cleaned:
+            continue
+        if cleaned.upper() == "ALL":
+            return ["ALL"]
+        if cleaned not in out:
+            out.append(cleaned)
+    return out
+
+
+def normalize_document_access(
+    source_file: str,
+    role_owner: str | None = None,
+    role_owners=None,
+    visibility_roles=None,
+    min_clearance: str | None = None,
+) -> dict:
+    owners = _normalize_role_list(role_owners, fallback=[role_owner] if role_owner else [])
+    if role_owner and role_owner not in owners:
+        owners.append(role_owner)
+    inferred_confidential = "confidential" in (source_file or "").lower()
+
+    normalized_visibility = _normalize_role_list(visibility_roles)
+    if not normalized_visibility:
+        if inferred_confidential:
+            normalized_visibility = owners or ["__CONFIDENTIAL__"]
+        else:
+            normalized_visibility = ["ALL"]
+
+    normalized_clearance = (min_clearance or "").strip().lower()
+    if normalized_clearance not in _CLEARANCE_RANK:
+        normalized_clearance = "senior" if inferred_confidential else "standard"
+
+    return {
+        "role_owner": role_owner,
+        "role_owners": owners or ([role_owner] if role_owner else []),
+        "visibility_roles": normalized_visibility,
+        "min_clearance": normalized_clearance,
+    }
+
+
+def normalize_document_row(row: dict | None) -> dict:
+    row = dict(row or {})
+    access = normalize_document_access(
+        source_file=row.get("source_file", ""),
+        role_owner=row.get("role_owner"),
+        role_owners=row.get("role_owners"),
+        visibility_roles=row.get("visibility_roles"),
+        min_clearance=row.get("min_clearance"),
+    )
+    row["role_owners"] = access["role_owners"]
+    row["visibility_roles"] = access["visibility_roles"]
+    row["min_clearance"] = access["min_clearance"]
+    if not row.get("role_owner") and row["role_owners"]:
+        row["role_owner"] = row["role_owners"][0]
+    return row
+
+
+def document_is_visible(document_row: dict, viewer_account: dict) -> bool:
+    row = normalize_document_row(document_row)
+    viewer = get_demo_account((viewer_account or {}).get("id"))
+    if clearance_rank(viewer.get("clearance")) < clearance_rank(row.get("min_clearance")):
+        return False
+    if "ALL" in row.get("visibility_roles", []):
+        return True
+    if viewer.get("global_access"):
+        return True
+    department_role = viewer.get("department_role")
+    return bool(department_role and department_role in row.get("visibility_roles", []))
 
 
 def _now_iso() -> str:
@@ -300,11 +465,22 @@ def upsert_document(
     chunks: int,
     modality: str = "document",
     role_owners=None,
+    visibility_roles=None,
+    min_clearance: str | None = None,
 ) -> dict:
+    access = normalize_document_access(
+        source_file=source_file,
+        role_owner=role_owner,
+        role_owners=role_owners,
+        visibility_roles=visibility_roles,
+        min_clearance=min_clearance,
+    )
     row = {
         "source_file": source_file,
         "role_owner": role_owner,
-        "role_owners": role_owners or [role_owner],
+        "role_owners": access["role_owners"] or [role_owner],
+        "visibility_roles": access["visibility_roles"],
+        "min_clearance": access["min_clearance"],
         "last_updated": last_updated,
         "chunks": chunks,
         "modality": modality,
@@ -329,7 +505,12 @@ def list_documents() -> list[dict]:
     client = _supabase()
     if client is not None:
         try:
-            return (client.table("documents").select("*").execute()).data or []
+            rows = (client.table("documents").select("*").execute()).data or []
+            return [normalize_document_row(row) for row in rows]
         except Exception:
             pass
-    return _local_read("documents")
+    rows = _local_read("documents")
+    normalized = [normalize_document_row(row) for row in rows]
+    if normalized != rows:
+        _local_write("documents", normalized)
+    return normalized

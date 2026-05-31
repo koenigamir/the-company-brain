@@ -16,6 +16,7 @@ app = FastAPI(title="Company Brain GraphRAG API")
 DATA_DIR = os.getenv("COMPANY_BRAIN_DATA_DIR", "data")
 CHROMA_DIR = os.getenv("COMPANY_BRAIN_CHROMA_DIR", "chroma_db")
 COLLECTION_NAME = "company_brain"
+VALID_CLEARANCE_LEVELS = {"intern", "standard", "senior"}
 
 
 class HealthResponse(BaseModel):
@@ -34,6 +35,7 @@ class HealthResponse(BaseModel):
 class QueryRequest(BaseModel):
     question: str = Field(min_length=1)
     history: list[dict[str, Any]] = Field(default_factory=list)
+    viewer_account_id: str | None = Field(default="standard-employee")
 
 
 class GapTicketRequest(BaseModel):
@@ -71,7 +73,11 @@ def query(request: QueryRequest) -> dict[str, Any]:
     try:
         import rag_engine
 
-        return rag_engine.query_brain(request.question, history=request.history)
+        return rag_engine.query_brain(
+            request.question,
+            history=request.history,
+            viewer_account_id=request.viewer_account_id or "standard-employee",
+        )
     except Exception as exc:
         raise HTTPException(status_code=500, detail=str(exc)) from exc
 
@@ -80,17 +86,29 @@ def query(request: QueryRequest) -> dict[str, Any]:
 async def ingest(
     file: UploadFile = File(...),
     role_owner: str | None = Form(default=None),
+    visibility_roles: list[str] | None = Form(default=None),
+    min_clearance: str | None = Form(default=None),
 ) -> dict[str, Any]:
     try:
         import rag_engine
 
+        normalized_clearance = (min_clearance or "").strip().lower() or None
+        if normalized_clearance and normalized_clearance not in VALID_CLEARANCE_LEVELS:
+            raise HTTPException(
+                status_code=400,
+                detail="min_clearance must be one of: intern, standard, senior",
+            )
         file_bytes = await file.read()
         return rag_engine.add_file_to_brain(
             file_bytes,
             file.filename or "uploaded-file",
             role_owner=role_owner or None,
+            visibility_roles=visibility_roles or None,
+            min_clearance=normalized_clearance,
         )
     except Exception as exc:
+        if isinstance(exc, HTTPException):
+            raise
         raise HTTPException(status_code=500, detail=str(exc)) from exc
 
 
@@ -100,6 +118,19 @@ def roles() -> dict[str, Any]:
         import store
 
         return {"roles": store.role_names(), "backend": store.backend_name()}
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
+
+
+@app.get("/demo-accounts")
+def demo_accounts() -> dict[str, Any]:
+    try:
+        import store
+
+        return {
+            "accounts": store.list_demo_accounts(),
+            "backend": store.backend_name(),
+        }
     except Exception as exc:
         raise HTTPException(status_code=500, detail=str(exc)) from exc
 

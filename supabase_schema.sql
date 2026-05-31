@@ -29,18 +29,22 @@ create table if not exists gap_tickets (
 
 -- Document ownership + freshness (one row per source file).
 create table if not exists documents (
-    source_file  text primary key,
-    role_owner   text not null,
-    role_owners  text[] default '{}',
-    last_updated date,
-    chunks       integer default 0,
-    modality     text default 'document',
-    updated_at   timestamptz default now()
+    source_file      text primary key,
+    role_owner       text not null,
+    role_owners      text[] default '{}',
+    visibility_roles text[] default '{ALL}',
+    min_clearance    text default 'standard',
+    last_updated     date,
+    chunks           integer default 0,
+    modality         text default 'document',
+    updated_at       timestamptz default now()
 );
 
 -- If you created the documents table before these columns were added:
 alter table documents add column if not exists modality text default 'document';
 alter table documents add column if not exists role_owners text[] default '{}';
+alter table documents add column if not exists visibility_roles text[] default '{ALL}';
+alter table documents add column if not exists min_clearance text default 'standard';
 
 -- Demo convenience: allow the anon key to read/write.
 -- For production, replace these with proper Row Level Security policies.
