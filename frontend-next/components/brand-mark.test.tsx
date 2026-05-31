@@ -3,6 +3,9 @@ import test from "node:test";
 import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 
+import Home from "../app/page";
+import QueryPage from "../app/query/page";
+import UploadPage from "../app/upload/page";
 import { BrandMark, IntelligenceLogo, SixLogo } from "./brand-mark";
 
 test("BrandMark renders the intelligence wordmark and a robot mark", () => {
@@ -11,6 +14,8 @@ test("BrandMark renders the intelligence wordmark and a robot mark", () => {
   assert.match(markup, /intelligence/);
   assert.match(markup, /<svg/);
   assert.match(markup, /seven-mark/);
+  assert.match(markup, /robot-head/);
+  assert.match(markup, /#E42313/);
 });
 
 test("SixLogo renders the provided sponsor image asset", () => {
@@ -27,4 +32,33 @@ test("IntelligenceLogo exposes the full intelligence lockup", () => {
 
   assert.match(markup, /intelligence/);
   assert.match(markup, /intelligenceLogoWord/);
+});
+
+test("Home keeps the seven created for lockup with the SIX logo", () => {
+  const markup = renderToStaticMarkup(<Home />);
+
+  assert.match(markup, /seven created for/);
+  assert.match(markup, /six-logo\.png/);
+});
+
+test("Query page keeps only the minimal centered copy", () => {
+  const markup = renderToStaticMarkup(<QueryPage />);
+
+  assert.match(markup, /Ask the company knowledge base/);
+  assert.match(markup, /Your question/);
+  assert.doesNotMatch(
+    markup,
+    /Search across the indexed regulatory, tax, ESG, and reference-data corpus/,
+  );
+  assert.doesNotMatch(markup, /Start with a real compliance question/);
+});
+
+test("Upload page removes the long explanatory intro copy", () => {
+  const markup = renderToStaticMarkup(<UploadPage />);
+
+  assert.match(markup, /Add new knowledge/);
+  assert.doesNotMatch(
+    markup,
+    /Upload reference documents so the backend can extract text, create chunks/,
+  );
 });

@@ -1,5 +1,6 @@
 "use client";
 
+import React from "react";
 import Link from "next/link";
 import { FormEvent, useEffect, useState } from "react";
 
@@ -111,14 +112,9 @@ export default function UploadPage() {
 
   return (
     <main className="pageShell">
-      <section className="pageIntro">
+      <section className="pageIntro minimalPageIntro">
         <p className="eyebrow">Upload Workspace</p>
         <h1>Add new knowledge</h1>
-        <p className="lede">
-          Upload reference documents so the backend can extract text, create chunks,
-          update the vector store, persist metadata, and connect the material into
-          the graph with the right role ownership.
-        </p>
       </section>
 
       <section className="toolLayout">

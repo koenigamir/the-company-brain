@@ -29,6 +29,14 @@ Use this structure for new entries:
 
 ## Current Log
 
+### 2026-05-31 - Branding And Copy Simplified Further
+
+- Context: The frontend still needed finer visual tuning on the hero branding plus a more stripped-back query/upload presentation.
+- Actions: Sampled the dominant red from the provided SIX logo asset, redesigned the robot `7` glyph to read more explicitly as a robot in the same red, adjusted the global background toward a light-red gradient, restored the `seven created for` lockup on the splash page, converted the provided SIX PNG to a transparent-background version inside `frontend-next/public/`, and shortened the query/upload intro copy even further.
+- Changes made: `frontend-next/components/brand-mark.tsx` now uses a more robotic `7` in `#E42313`; the splash page again says `seven created for`; `frontend-next/app/query/page.tsx` now opens with only the centered `Ask the company knowledge base` heading plus the question form and no longer shows the earlier extra helper copy; `frontend-next/app/upload/page.tsx` no longer shows the long explanatory intro sentence; `frontend-next/app/globals.css` now uses a lighter red gradient background; `frontend-next/public/six-logo.png` was rewritten with transparency so only the red SIX mark remains.
+- Risks / open questions: Tests, typecheck, and build passed before the final transparent-PNG cleanup; no code logic changed during that last asset conversion step.
+- Next agent: If the team later wants a sharper sponsor mark at larger sizes, replace the current transparent PNG with a true SVG/vector version while preserving the same proportions and red tone.
+
 ### 2026-05-31 - Intelligence Header Simplified And Role UX Surfaced
 
 - Context: The frontend needed a cleaner branded shell, the exact SIX logo asset from the user, a shorter welcome page, plainer query-answer rendering, and fuller exposure of the repo's implemented role model.
