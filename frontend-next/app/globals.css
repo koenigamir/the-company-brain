@@ -101,6 +101,10 @@ button {
   box-shadow: 0 18px 42px rgba(58, 29, 35, 0.08);
 }
 
+.minimalHeader {
+  justify-content: flex-start;
+}
+
 .brandLink {
   display: inline-flex;
   align-items: center;
@@ -109,7 +113,33 @@ button {
 .brandMark {
   display: inline-flex;
   align-items: center;
-  gap: 0.8rem;
+  max-width: 100%;
+}
+
+.intelligenceLogo {
+  display: inline-flex;
+  align-items: flex-end;
+  gap: clamp(0.45rem, 1.3vw, 0.9rem);
+}
+
+.intelligenceLogoGlyph {
+  display: inline-flex;
+  width: clamp(2.25rem, 4vw, 3.15rem);
+  flex: 0 0 auto;
+  transform: translateY(-0.04em);
+}
+
+.intelligenceLogoGlyph .seven-mark {
+  width: 100%;
+  height: auto;
+}
+
+.intelligenceLogoWord {
+  font-family: var(--font-display);
+  font-size: clamp(1.55rem, 3vw, 2rem);
+  font-weight: 800;
+  letter-spacing: -0.08em;
+  line-height: 0.88;
 }
 
 .srOnly {
@@ -142,9 +172,8 @@ button {
 
 .six-logo {
   display: block;
-  width: 7.5rem;
+  width: clamp(7.8rem, 12vw, 10.8rem);
   height: auto;
-  color: var(--red);
 }
 
 .brandWordmark {
@@ -255,6 +284,25 @@ button {
   text-align: center;
 }
 
+.heroIntelligenceLogo {
+  display: flex;
+  justify-content: center;
+  width: min(100%, 58rem);
+}
+
+.heroIntelligenceLogo .intelligenceLogo {
+  align-items: flex-end;
+  gap: clamp(0.55rem, 1.6vw, 1.2rem);
+}
+
+.heroIntelligenceLogo .intelligenceLogoGlyph {
+  width: clamp(4.8rem, 11vw, 7rem);
+}
+
+.heroIntelligenceLogo .intelligenceLogoWord {
+  font-size: clamp(3.9rem, 10vw, 7.8rem);
+}
+
 .intelligenceWordmark {
   display: inline-flex;
   align-items: flex-end;
@@ -358,7 +406,10 @@ button {
 .ctaCard,
 .heroPanel,
 .feedbackCard,
-.infoTile {
+.infoTile,
+.roleCard,
+.compactDocumentCard,
+.selectionHintCard {
   border: 1px solid rgba(255, 255, 255, 0.62);
   background: var(--surface);
   backdrop-filter: blur(18px);
@@ -383,6 +434,9 @@ button {
 .heroPanel,
 .feedbackCard,
 .infoTile,
+.roleCard,
+.compactDocumentCard,
+.selectionHintCard,
 .summaryCard,
 .insightPanel,
 .emptyState {
@@ -731,6 +785,12 @@ h4 {
   cursor: pointer;
 }
 
+.ghostChip.active {
+  background: linear-gradient(135deg, var(--red), var(--red-deep));
+  color: #fff;
+  box-shadow: 0 16px 28px rgba(143, 16, 36, 0.16);
+}
+
 .feedbackCard,
 .emptyState,
 .summaryCard,
@@ -763,11 +823,32 @@ h4 {
   margin-top: 1.3rem;
 }
 
+.answerMetaRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  margin-top: 1rem;
+}
+
 .answerHero {
   display: flex;
   justify-content: space-between;
   gap: 1rem;
   align-items: flex-start;
+}
+
+.queryDetailsToggle {
+  margin-top: 1rem;
+}
+
+.stackDetails {
+  display: grid;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.plainAnswerText {
+  white-space: pre-line;
 }
 
 .confidencePill {
@@ -846,6 +927,34 @@ h4 {
   font-weight: 700;
 }
 
+.tagRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+  margin-top: 1rem;
+}
+
+.tagChip,
+.subtleRoleChip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.45rem 0.72rem;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.tagChip {
+  background: rgba(255, 255, 255, 0.8);
+  color: var(--muted);
+}
+
+.subtleRoleChip {
+  background: rgba(215, 25, 45, 0.08);
+  color: var(--red-deep);
+}
+
 .roleChip {
   display: inline-flex;
   align-items: center;
@@ -855,6 +964,65 @@ h4 {
   background: rgba(255, 255, 255, 0.78);
   color: var(--ink);
   font-weight: 700;
+}
+
+.roleSectionHeading {
+  margin-top: 1.8rem;
+}
+
+.roleCatalogGrid,
+.documentListCompact {
+  display: grid;
+  gap: 1rem;
+  margin-top: 1.25rem;
+}
+
+.roleCatalogGrid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.documentListCompact {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.roleCard,
+.compactDocumentCard,
+.selectionHintCard {
+  padding: 1.3rem;
+}
+
+.roleCard {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.roleCardHeader,
+.documentCardHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.85rem;
+}
+
+.roleCountBadge,
+.documentModeBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.48rem 0.78rem;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 800;
+}
+
+.roleCountBadge {
+  background: rgba(215, 25, 45, 0.1);
+  color: var(--red-deep);
+}
+
+.documentModeBadge {
+  background: rgba(255, 255, 255, 0.82);
+  color: var(--muted);
+  text-transform: capitalize;
 }
 
 .documentCard {
@@ -870,6 +1038,15 @@ h4 {
 .documentMetaRow {
   color: var(--muted);
   font-size: 0.92rem;
+}
+
+.selectionHintCard {
+  display: grid;
+  gap: 0.75rem;
+  margin-top: 0.15rem;
+  background:
+    linear-gradient(180deg, rgba(255, 248, 250, 0.92), rgba(255, 255, 255, 0.76)),
+    linear-gradient(135deg, rgba(215, 25, 45, 0.08), transparent 60%);
 }
 
 .uploadDropzone {
@@ -901,7 +1078,7 @@ h4 {
 }
 
 .infoStrip {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
 @media (max-width: 1080px) {
@@ -919,7 +1096,9 @@ h4 {
   .ctaGrid,
   .workspaceOverviewGrid,
   .roleGrid,
+  .roleCatalogGrid,
   .documentGrid,
+  .documentListCompact,
   .detailGrid,
   .insightGrid,
   .infoStrip {
@@ -960,11 +1139,29 @@ h4 {
     padding: 1.8rem 0.4rem;
   }
 
+  .heroIntelligenceLogo .intelligenceLogo {
+    flex-direction: column;
+    align-items: center;
+    gap: 0.45rem;
+  }
+
+  .heroIntelligenceLogo .intelligenceLogoGlyph {
+    width: 4.4rem;
+  }
+
+  .heroIntelligenceLogo .intelligenceLogoWord {
+    font-size: clamp(3rem, 17vw, 4.8rem);
+  }
+
   h1 {
     font-size: 2.5rem;
   }
 
   .answerHero {
+    flex-direction: column;
+  }
+
+  .documentCardHeader {
     flex-direction: column;
   }
 

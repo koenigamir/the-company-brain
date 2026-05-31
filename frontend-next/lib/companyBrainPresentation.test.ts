@@ -5,10 +5,13 @@ import {
   buildGapTicketRequest,
   describeAnswerMode,
   formatMetadataList,
+  countDocumentsForRole,
   getConfidenceTone,
+  getDocumentRoleList,
   getDocumentOwners,
   getDocumentSource,
   getGapSignalLines,
+  normalizeAnswerText,
   getRoutedRoles,
 } from "./companyBrainPresentation";
 
@@ -104,6 +107,13 @@ test("document helpers favor canonical backend document fields", () => {
     }),
     "ESG Compliance, Regulatory Services",
   );
+
+  assert.deepEqual(
+    getDocumentRoleList({
+      role_owners: ["ESG Compliance", "Regulatory Services"],
+    }),
+    ["ESG Compliance", "Regulatory Services"],
+  );
 });
 
 test("buildGapTicketRequest preserves the backend gap object", () => {
@@ -135,4 +145,25 @@ test("buildGapTicketRequest preserves the backend gap object", () => {
   });
   assert.equal(request.body, "Drafted ticket body");
   assert.deepEqual(request.missing_topics, ["Bangladesh framework"]);
+});
+
+test("normalizeAnswerText removes common latex wrappers for plain display", () => {
+  assert.equal(
+    normalizeAnswerText("\\text{Coverage is } $High$ \\n\\(reviewed\\)"),
+    "Coverage is  High \nreviewed",
+  );
+});
+
+test("countDocumentsForRole handles multi-owner documents", () => {
+  assert.equal(
+    countDocumentsForRole(
+      [
+        { source_file: "a.pdf", role_owners: ["ESG Compliance", "Tax Team"] },
+        { source_file: "b.pdf", role_owner: "Tax Team" },
+        { source_file: "c.pdf", role_owner: "Master Data Ops" },
+      ],
+      "Tax Team",
+    ),
+    2,
+  );
 });

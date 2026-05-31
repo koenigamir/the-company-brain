@@ -103,9 +103,12 @@ export type CompanyBrainIngestResult = {
   chunks?: number;
   role_owners?: string[];
   role_owner?: string;
+  role_reason?: string;
   owner?: string;
   entities?: string[];
   modality?: string;
+  extractor?: string;
+  extraction_confidence?: number | null;
   updated_at?: string;
   last_updated?: string;
   message?: string;

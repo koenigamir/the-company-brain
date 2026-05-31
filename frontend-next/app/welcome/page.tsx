@@ -5,9 +5,13 @@ import { useEffect, useState } from "react";
 
 import { SixLogo } from "../../components/brand-mark";
 import {
+  ROLE_CATALOG,
+  countDocumentsForRole,
+  getDocumentRoleList,
   getDocumentOwners,
   getDocumentSource,
   getDocumentUpdated,
+  getRoleCatalogEntry,
 } from "../../lib/companyBrainPresentation";
 import type {
   CompanyBrainDocument,
@@ -15,30 +19,6 @@ import type {
   HealthResponse,
   RolesResponse,
 } from "../../types/companyBrain";
-
-const coreTopics = [
-  "MiFID II and MiFIR workflow coverage",
-  "SFDR, ESG, and sustainability disclosure context",
-  "FATCA, tax, and reference-data ownership trails",
-];
-
-const valuePoints = [
-  {
-    title: "Grounded answers",
-    copy:
-      "Every response is tied back to indexed material instead of acting like a generic chatbot.",
-  },
-  {
-    title: "Transparent ownership",
-    copy:
-      "Seven surfaces likely owners, source files, update dates, and routing clues around each answer.",
-  },
-  {
-    title: "Living knowledge base",
-    copy:
-      "Users can grow the system by uploading new documents directly from the product experience.",
-  },
-];
 
 type LoadState = {
   health: HealthResponse | null;
@@ -69,6 +49,7 @@ export default function WelcomePage() {
     rolesError: null,
     documentsError: null,
   });
+  const [selectedRole, setSelectedRole] = useState("All roles");
 
   useEffect(() => {
     let isMounted = true;
@@ -112,20 +93,32 @@ export default function WelcomePage() {
     };
   }, []);
 
-  const liveDocuments = state.documents.slice(0, 6);
+  const knownRoles = Array.from(
+    new Set([
+      ...ROLE_CATALOG.map((entry) => entry.name),
+      ...state.roles,
+      ...state.documents.flatMap((document) => getDocumentRoleList(document)),
+    ]),
+  );
+
+  const filteredDocuments =
+    selectedRole === "All roles"
+      ? state.documents
+      : state.documents.filter((document) =>
+          getDocumentRoleList(document).includes(selectedRole),
+        );
+
+  const liveDocuments = filteredDocuments.slice(0, 4);
 
   return (
     <main className="pageShell landingShell">
       <section className="landingHero">
         <div className="heroCopy">
-          <p className="eyebrow">Welcome to Seven</p>
-          <h1>
-            The modern interface for company knowledge that should not stay
-            trapped in inboxes and experts.
-          </h1>
+          <p className="eyebrow">Welcome</p>
+          <h1>Grounded answers, visible ownership, faster follow-up.</h1>
           <p className="lede">
-            Seven turns regulatory, tax, ESG, and reference-data material into a
-            searchable, source-aware workspace built on the Company Brain backend.
+            This frontend connects the Company Brain backend to a calmer workspace
+            for regulatory, tax, ESG, and reference-data questions.
           </p>
 
           <div className="actionRow">
@@ -142,16 +135,15 @@ export default function WelcomePage() {
           <p className="heroPanelLabel">Live workspace snapshot</p>
           <div className="heroPanelFooter">
             <span>{state.health?.ok ? "Backend reachable" : "Waiting for backend"}</span>
-            <span>{state.roles.length} known roles</span>
+            <span>{knownRoles.length} known roles</span>
             <span>{state.documents.length} stored documents</span>
           </div>
-          <ul className="heroTopicList">
-            {coreTopics.map((topic) => (
-              <li key={topic}>{topic}</li>
-            ))}
-          </ul>
+          <p className="supportingCopy">
+            Roles and documents are loaded through the Next proxy routes, so the UI
+            stays aligned with the updated backend contract.
+          </p>
           <div className="heroSponsorLockup">
-            <span className="supportingCopy">Seven created for</span>
+            <span className="supportingCopy">created for</span>
             <SixLogo className="panelSixLogo" />
           </div>
         </div>
@@ -159,23 +151,8 @@ export default function WelcomePage() {
 
       <section className="landingSection">
         <div className="sectionHeading">
-          <p className="eyebrow">Why it matters</p>
-          <h2>Seven helps teams reuse expertise instead of re-hunting for it.</h2>
-        </div>
-        <div className="featureGrid">
-          {valuePoints.map((point) => (
-            <article className="featureCard" key={point.title}>
-              <h3>{point.title}</h3>
-              <p>{point.copy}</p>
-            </article>
-          ))}
-        </div>
-      </section>
-
-      <section className="landingSection">
-        <div className="sectionHeading">
-          <p className="eyebrow">Live backend overview</p>
-          <h2>See what the current Company Brain instance exposes right now.</h2>
+          <p className="eyebrow">Workspace overview</p>
+          <h2>Role ownership is now surfaced directly in the frontend.</h2>
         </div>
 
         <div className="workspaceOverviewGrid">
@@ -202,36 +179,108 @@ export default function WelcomePage() {
           </article>
 
           <article className="infoTile">
-            <h3>Owning role catalog</h3>
-            {state.roles.length ? (
-              <>
-                <p className="supportingCopy">
-                  Current source: {state.rolesBackend || "unknown backend"}.
-                </p>
-                <div className="roleGrid">
-                  {state.roles.map((role) => (
-                    <span className="roleChip" key={role}>
-                      {role}
-                    </span>
-                  ))}
-                </div>
-              </>
-            ) : (
-              <p>{state.rolesError || "No roles were returned yet."}</p>
-            )}
+            <h3>How roles are used</h3>
+            <p>
+              The frontend now reflects the shared SIX role catalog, multi-role
+              document ownership, and the same routed-role language used in gap
+              handling and ingest results.
+            </p>
+            <p className="supportingCopy">
+              Current source: {state.rolesBackend || state.rolesError || "repo role catalog"}.
+            </p>
           </article>
         </div>
 
-        <div className="documentGrid">
+        <div className="sectionHeading roleSectionHeading">
+          <p className="eyebrow">Roles</p>
+          <h2>Choose a role lens or scan the full catalog.</h2>
+        </div>
+
+        <div className="sampleRow" role="tablist" aria-label="Role filters">
+          <button
+            className={`ghostChip${selectedRole === "All roles" ? " active" : ""}`}
+            onClick={() => setSelectedRole("All roles")}
+            type="button"
+          >
+            All roles
+          </button>
+          {knownRoles.map((role) => (
+            <button
+              className={`ghostChip${selectedRole === role ? " active" : ""}`}
+              key={role}
+              onClick={() => setSelectedRole(role)}
+              type="button"
+            >
+              {role}
+            </button>
+          ))}
+        </div>
+
+        <div className="roleCatalogGrid">
+          {knownRoles.map((role) => {
+            const entry = getRoleCatalogEntry(role);
+
+            return (
+              <article className="roleCard" key={role}>
+                <div className="roleCardHeader">
+                  <div>
+                    <p className="eyebrow">Owning role</p>
+                    <h3>{entry.name}</h3>
+                  </div>
+                  <span className="roleCountBadge">
+                    {countDocumentsForRole(state.documents, role)} docs
+                  </span>
+                </div>
+                <p>{entry.description}</p>
+                <div className="tagRow">
+                  {entry.tags.map((tag) => (
+                    <span className="tagChip" key={tag}>
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+              </article>
+            );
+          })}
+        </div>
+
+        <div className="sectionHeading roleSectionHeading">
+          <p className="eyebrow">Documents</p>
+          <h2>
+            {selectedRole === "All roles"
+              ? "Recent indexed material"
+              : `Recent material tagged for ${selectedRole}`}
+          </h2>
+        </div>
+
+        <div className="documentListCompact">
           {liveDocuments.length ? (
             liveDocuments.map((document) => (
-              <article className="documentCard" key={getDocumentSource(document)}>
-                <p className="eyebrow">Indexed document</p>
-                <h3>{getDocumentSource(document)}</h3>
+              <article className="compactDocumentCard" key={getDocumentSource(document)}>
+                <div className="documentCardHeader">
+                  <div>
+                    <p className="eyebrow">Indexed document</p>
+                    <h3>{getDocumentSource(document)}</h3>
+                  </div>
+                  <span className="documentModeBadge">
+                    {document.modality || "document"}
+                  </span>
+                </div>
                 <p>
-                  Owned by {getDocumentOwners(document)} with{" "}
-                  {document.chunks ?? "unknown"} chunks in {document.modality || "document"} mode.
+                  Owned by {getDocumentOwners(document)} with {document.chunks ?? "unknown"}{" "}
+                  chunks.
                 </p>
+                <div className="tagRow">
+                  {getDocumentRoleList(document).length ? (
+                    getDocumentRoleList(document).map((role) => (
+                      <span className="subtleRoleChip" key={`${getDocumentSource(document)}-${role}`}>
+                        {role}
+                      </span>
+                    ))
+                  ) : (
+                    <span className="subtleRoleChip">Unassigned</span>
+                  )}
+                </div>
                 <div className="documentMetaRow">
                   <span>Updated {getDocumentUpdated(document)}</span>
                 </div>
@@ -241,37 +290,12 @@ export default function WelcomePage() {
             <article className="emptyState">
               <p className="eyebrow">Documents</p>
               <h3>No document records loaded</h3>
-              <p>{state.documentsError || "Upload a file to populate this view."}</p>
+              <p>
+                {state.documentsError ||
+                  "Upload a file or switch the role lens once document records are available."}
+              </p>
             </article>
           )}
-        </div>
-      </section>
-
-      <section className="landingSection ctaSection">
-        <div className="sectionHeading">
-          <p className="eyebrow">Get started</p>
-          <h2>Choose the part of Seven you want to enter.</h2>
-        </div>
-        <div className="ctaGrid">
-          <article className="ctaCard">
-            <h3>Go to the query page</h3>
-            <p>
-              Ask the backend what it already knows and inspect the answer trail in
-              the dedicated workspace.
-            </p>
-            <Link className="primaryButton" href="/query">
-              Open query workspace
-            </Link>
-          </article>
-          <article className="ctaCard subtle">
-            <h3>Go to the upload page</h3>
-            <p>
-              Add new source documents so Seven can expand what it can answer next.
-            </p>
-            <Link className="secondaryButton" href="/upload">
-              Open upload workspace
-            </Link>
-          </article>
         </div>
       </section>
     </main>

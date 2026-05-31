@@ -3,17 +3,17 @@
 import Link from "next/link";
 import { FormEvent, useEffect, useState } from "react";
 
+import {
+  ROLE_CATALOG,
+  getRoleCatalogEntry,
+} from "../../lib/companyBrainPresentation";
 import type {
   CompanyBrainIngestResult,
   RolesResponse,
 } from "../../types/companyBrain";
 
-const roleOptions = [
-  "Auto-detect from filename",
-  "ESG Compliance",
-  "Master Data Ops",
-  "Tax Team",
-];
+const automaticRoleOption = "Auto-detect from filename";
+const roleOptions = [automaticRoleOption, ...ROLE_CATALOG.map((entry) => entry.name)];
 
 const acceptedFileTypes = [
   ".pdf",
@@ -53,7 +53,9 @@ export default function UploadPage() {
           return;
         }
         if (isMounted) {
-          setAvailableRoles([roleOptions[0], ...body.roles]);
+          setAvailableRoles(
+            Array.from(new Set([automaticRoleOption, ...body.roles, ...roleOptions])),
+          );
           setRolesBackend(body.backend);
         }
       } catch {
@@ -104,15 +106,18 @@ export default function UploadPage() {
     }
   }
 
+  const selectedRoleDetails =
+    roleOwner !== automaticRoleOption ? getRoleCatalogEntry(roleOwner) : null;
+
   return (
     <main className="pageShell">
       <section className="pageIntro">
         <p className="eyebrow">Upload Workspace</p>
-        <h1>Add new knowledge to Seven</h1>
+        <h1>Add new knowledge</h1>
         <p className="lede">
           Upload reference documents so the backend can extract text, create chunks,
           update the vector store, persist metadata, and connect the material into
-          the graph.
+          the graph with the right role ownership.
         </p>
       </section>
 
@@ -154,13 +159,38 @@ export default function UploadPage() {
               ))}
             </select>
 
+            <div className="selectionHintCard">
+              {selectedRoleDetails ? (
+                <>
+                  <h3>{selectedRoleDetails.name}</h3>
+                  <p>{selectedRoleDetails.description}</p>
+                  <div className="tagRow">
+                    {selectedRoleDetails.tags.map((tag) => (
+                      <span className="tagChip" key={tag}>
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                </>
+              ) : (
+                <>
+                  <h3>Automatic role assignment</h3>
+                  <p>
+                    Automatic assignment uses the shared SIX role catalog and can
+                    attach multiple owning roles when a document clearly spans more
+                    than one domain.
+                  </p>
+                </>
+              )}
+            </div>
+
             <div className="actionRow">
               <button
                 className="primaryButton"
                 disabled={isUploading || !file}
                 type="submit"
               >
-                {isUploading ? "Ingesting document..." : "Upload to Seven"}
+                {isUploading ? "Ingesting document..." : "Upload"}
               </button>
               <Link className="secondaryLink" href="/query">
                 Go to query workspace
@@ -172,7 +202,7 @@ export default function UploadPage() {
             <div className="infoTile">
               <h3>What happens after upload</h3>
               <p>
-                Seven saves the file into the backend data directory, extracts text,
+                The backend saves the file, extracts text or media content,
                 regenerates chunks, refreshes vectors, and merges graph entities for
                 that document.
               </p>
@@ -205,7 +235,7 @@ export default function UploadPage() {
             <section className="feedbackCard successCard">
               <strong>Document indexed</strong>
               <p>
-                {result.filename || "The file"} was added to Seven with{" "}
+                {result.filename || "The file"} was indexed with{" "}
                 {result.chunks ?? "new"} generated chunks.
               </p>
               <dl className="detailGrid">
@@ -218,6 +248,10 @@ export default function UploadPage() {
                   </dd>
                 </div>
                 <div className="detailTile">
+                  <dt>Role reason</dt>
+                  <dd>{result.role_reason || "No explicit routing reason returned."}</dd>
+                </div>
+                <div className="detailTile">
                   <dt>Entities</dt>
                   <dd>
                     {result.entities?.length
@@ -228,6 +262,18 @@ export default function UploadPage() {
                 <div className="detailTile">
                   <dt>Modality</dt>
                   <dd>{result.modality || "document"}</dd>
+                </div>
+                <div className="detailTile">
+                  <dt>Extractor</dt>
+                  <dd>
+                    {result.extractor
+                      ? `${result.extractor}${
+                          typeof result.extraction_confidence === "number"
+                            ? ` (${result.extraction_confidence})`
+                            : ""
+                        }`
+                      : "Direct text ingest"}
+                  </dd>
                 </div>
               </dl>
             </section>

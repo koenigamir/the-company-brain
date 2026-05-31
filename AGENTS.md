@@ -29,6 +29,14 @@ Use this structure for new entries:
 
 ## Current Log
 
+### 2026-05-31 - Intelligence Header Simplified And Role UX Surfaced
+
+- Context: The frontend needed a cleaner branded shell, the exact SIX logo asset from the user, a shorter welcome page, plainer query-answer rendering, and fuller exposure of the repo's implemented role model.
+- Actions: Re-read the repo docs and current frontend state, copied the provided SIX logo into `frontend-next/public/`, added test coverage for the reduced header and collapsed query details, removed the top nav/health bar, replaced in-code SIX artwork with the exact provided logo image, shortened the welcome page, surfaced the shared SIX role catalog and multi-role document ownership in the UI, and updated query/upload flows to match the newer role and ingest metadata.
+- Changes made: `frontend-next/` now shows only the `intelligence` brand in the top header, uses the provided SIX logo image asset, keeps query answers in plain text with a `More information` toggle for deeper traces, shows richer role cards and role-filtered recent documents on `/welcome`, and exposes upload-side role descriptions, role reasons, extractor names, and extraction confidence where available.
+- Risks / open questions: Unit tests, typecheck, and production build all pass; an extra live browser-style verification inside Codex was attempted but local process launch hit a Windows `Path`/`PATH` collision in `Start-Process`, so visual runtime confirmation in this session still relies on build and test evidence.
+- Next agent: Keep using `frontend-next/public/six-logo.png` as the exact sponsor mark, preserve the minimal top header, and if you need local visual QA in Codex first solve the current Windows background-process launch issue or use an external browser.
+
 ### 2026-05-31 - Seven Welcome Refresh And Backend Contract Alignment
 
 - Context: The frontend needed the correct SIX title branding, a real welcome route again, and UI support for the migrated backend routes now documented in `frontend-next/README.md`.

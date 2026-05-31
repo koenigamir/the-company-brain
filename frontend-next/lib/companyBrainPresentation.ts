@@ -12,6 +12,75 @@ type AnswerMode = {
   detail: string;
 };
 
+export type RoleCatalogEntry = {
+  name: string;
+  description: string;
+  tags: string[];
+};
+
+export const ROLE_CATALOG: RoleCatalogEntry[] = [
+  {
+    name: "ESG Compliance",
+    description:
+      "Sustainability and ESG disclosure regulation: SFDR, EU Taxonomy, EET templates, sustainability data and disclosures.",
+    tags: ["esg", "sfdr", "taxonomy", "eet", "sustainability"],
+  },
+  {
+    name: "Master Data Ops",
+    description:
+      "Reference and master data: master data opening and mutations, instrument attributes, instrument classification, EMT reference data.",
+    tags: [
+      "master data",
+      "reference data",
+      "mutations",
+      "attributes",
+      "classification",
+      "emt",
+    ],
+  },
+  {
+    name: "Tax Team",
+    description:
+      "Tax reporting and withholding: FATCA, qualified intermediary, withholding tax, Tax Navigator.",
+    tags: [
+      "fatca",
+      "tax",
+      "withholding",
+      "qualified intermediary",
+      "tax navigator",
+    ],
+  },
+  {
+    name: "Regulatory Services",
+    description:
+      "Regulatory interpretation and frameworks: MiFID II, MiFIR, product governance, suitability and complexity assessment, Regulatory Navigator.",
+    tags: [
+      "mifid",
+      "mifir",
+      "product governance",
+      "suitability",
+      "complexity",
+      "regulatory navigator",
+    ],
+  },
+  {
+    name: "Product Coverage & Onboarding",
+    description:
+      "Instrument and product coverage, classification coverage, and onboarding of new products and instruments.",
+    tags: ["product coverage", "coverage", "onboarding", "instruments"],
+  },
+  {
+    name: "Compliance & Sanctions",
+    description:
+      "Financial crime and market integrity: AML, KYC, sanctions screening, and trade surveillance.",
+    tags: ["aml", "kyc", "sanctions", "surveillance", "screening"],
+  },
+];
+
+const ROLE_CATALOG_BY_NAME = new Map(
+  ROLE_CATALOG.map((entry) => [entry.name, entry] as const),
+);
+
 function formatSignalCounts(counts: Record<string, unknown>): string {
   return Object.entries(counts)
     .map(([label, value]) => `${label} ${String(value)}`)
@@ -74,6 +143,23 @@ export function getGapSignalLines(
   return lines;
 }
 
+export function normalizeAnswerText(value: string | undefined): string {
+  if (!value) {
+    return "";
+  }
+
+  return value
+    .replace(/\\n/g, "\n")
+    .replace(/\\\(|\\\)|\\\[|\\\]/g, "")
+    .replace(/\$\$?/g, "")
+    .replace(/\\text\{([^}]*)\}/g, "$1")
+    .replace(/\\mathrm\{([^}]*)\}/g, "$1")
+    .replace(/\\mathbf\{([^}]*)\}/g, "$1")
+    .replace(/\\operatorname\{([^}]*)\}/g, "$1")
+    .replace(/\\\\/g, "\n")
+    .trim();
+}
+
 export function getRoutedRoles(answer: CompanyBrainAnswer | null): string[] {
   const routedRoles = answer?.gap_routing?.routed_roles;
   if (routedRoles?.length) {
@@ -101,12 +187,29 @@ export function getDocumentSource(document: CompanyBrainDocument): string {
   );
 }
 
-export function getDocumentOwners(document: CompanyBrainDocument): string {
+export function getDocumentRoleList(document: CompanyBrainDocument): string[] {
   if (document.role_owners?.length) {
-    return document.role_owners.join(", ");
+    return document.role_owners;
   }
 
-  return document.role_owner || document.owner || "Unassigned";
+  if (document.role_owner) {
+    return [document.role_owner];
+  }
+
+  if (document.owner) {
+    return [document.owner];
+  }
+
+  return [];
+}
+
+export function getDocumentOwners(document: CompanyBrainDocument): string {
+  const roles = getDocumentRoleList(document);
+  if (roles.length) {
+    return roles.join(", ");
+  }
+
+  return "Unassigned";
 }
 
 export function getDocumentUpdated(document: CompanyBrainDocument): string {
@@ -148,6 +251,25 @@ export function buildGapTicketRequest(
       "Knowledge gap review requested.",
     missing_topics: answer.missing_topics || [],
   };
+}
+
+export function getRoleCatalogEntry(roleName: string): RoleCatalogEntry {
+  return (
+    ROLE_CATALOG_BY_NAME.get(roleName) || {
+      name: roleName,
+      description: "Role description is not yet available in the frontend catalog.",
+      tags: [],
+    }
+  );
+}
+
+export function countDocumentsForRole(
+  documents: CompanyBrainDocument[],
+  roleName: string,
+): number {
+  return documents.filter((document) =>
+    getDocumentRoleList(document).includes(roleName),
+  ).length;
 }
 
 export function getPrimaryOwner(answer: CompanyBrainAnswer | null): string {

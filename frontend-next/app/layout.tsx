@@ -4,11 +4,11 @@ import { SiteHeader } from "../components/site-header";
 
 export const metadata: Metadata = {
   title: {
-    default: "Seven",
-    template: "%s | Seven",
+    default: "intelligence",
+    template: "%s | intelligence",
   },
   description:
-    "Seven is the user-facing Company Brain frontend for querying and growing the indexed knowledge base.",
+    "intelligence is the user-facing Company Brain frontend for querying and growing the indexed knowledge base.",
 };
 
 export default function RootLayout({
