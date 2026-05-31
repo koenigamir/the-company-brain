@@ -37,6 +37,8 @@ export function QueryAnswerPanel({
   const routedRoles = getRoutedRoles(answer);
   const summary = normalizeAnswerText(answer.short_answer || answer.summary);
   const detailedAnswer = normalizeAnswerText(answer.detailed_answer);
+  const isFullyRestricted =
+    (answer.restricted_source_count ?? 0) > 0 && !(answer.sources?.length);
   const hasMoreInformation = Boolean(
     detailedAnswer ||
       answer.graph ||
@@ -53,6 +55,7 @@ export function QueryAnswerPanel({
     : viewerAccount?.department_role
       ? `Role-based access for ${viewerAccount.department_role}`
       : "Clearance-only access";
+  const topChips = isFullyRestricted ? ["Restricted access"] : routedRoles;
 
   return (
     <article aria-label={`Answer for ${question}`} className="answerStack">
@@ -66,7 +69,7 @@ export function QueryAnswerPanel({
       </div>
 
       <div className="answerMetaRow">
-        {routedRoles.map((role) => (
+        {topChips.map((role) => (
           <span className="subtleRoleChip" key={role}>
             {role}
           </span>
@@ -96,7 +99,7 @@ export function QueryAnswerPanel({
 
       {showMore ? (
         <div className="stackDetails">
-          {detailedAnswer ? (
+          {detailedAnswer && !isFullyRestricted ? (
             <section className="insightPanel">
               <h3>Detailed answer</h3>
               <p className="preWrapText">{detailedAnswer}</p>
@@ -104,10 +107,12 @@ export function QueryAnswerPanel({
           ) : null}
 
           <dl className="detailGrid">
-            <div className="detailTile">
-              <dt>Owner</dt>
-              <dd>{getPrimaryOwner(answer)}</dd>
-            </div>
+            {!isFullyRestricted ? (
+              <div className="detailTile">
+                <dt>Owner</dt>
+                <dd>{getPrimaryOwner(answer)}</dd>
+              </div>
+            ) : null}
             <div className="detailTile">
               <dt>Viewer account</dt>
               <dd>{viewerAccount?.label || "Standard Employee"}</dd>
@@ -116,14 +121,18 @@ export function QueryAnswerPanel({
               <dt>Restricted sources</dt>
               <dd>{answer.restricted_source_count ?? 0}</dd>
             </div>
-            <div className="detailTile">
-              <dt>Sources</dt>
-              <dd>{formatMetadataList(answer.sources, "No cited sources")}</dd>
-            </div>
-            <div className="detailTile">
-              <dt>Updated</dt>
-              <dd>{formatMetadataList(answer.last_updated_dates, "Unknown")}</dd>
-            </div>
+            {!isFullyRestricted ? (
+              <div className="detailTile">
+                <dt>Sources</dt>
+                <dd>{formatMetadataList(answer.sources, "No cited sources")}</dd>
+              </div>
+            ) : null}
+            {!isFullyRestricted ? (
+              <div className="detailTile">
+                <dt>Updated</dt>
+                <dd>{formatMetadataList(answer.last_updated_dates, "Unknown")}</dd>
+              </div>
+            ) : null}
             <div className="detailTile">
               <dt>Clearance</dt>
               <dd>{formatClearanceLabel(viewerAccount?.clearance)}</dd>
@@ -134,7 +143,7 @@ export function QueryAnswerPanel({
             </div>
           </dl>
 
-          {answer.graph ? (
+          {answer.graph && !isFullyRestricted ? (
             <section className="insightPanel">
               <h3>Knowledge graph trace</h3>
               <div className="insightGrid">
@@ -182,7 +191,7 @@ export function QueryAnswerPanel({
             </section>
           ) : null}
 
-          {answer.gap_routing ? (
+          {answer.gap_routing && !isFullyRestricted ? (
             <section className="insightPanel warningPanel">
               <h3>Knowledge gap routing</h3>
               <p className="supportingCopy">

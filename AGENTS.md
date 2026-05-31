@@ -29,6 +29,22 @@ Use this structure for new entries:
 
 ## Current Log
 
+### 2026-05-31 - Workspace Header Navigation Restored
+
+- Context: The user wanted the top navigation back on all workspace pages, but not on the intro start slide, and also needed a direct way back to the start page.
+- Actions: Added a red header test for the two page modes, split the header into a pure frame plus pathname-aware wrapper, restored the top navigation for internal routes, and verified it with tests, typecheck, build, plus local browser screenshots on `/` and `/welcome`.
+- Changes made: `frontend-next/components/site-header.tsx` now shows `Start`, `Welcome`, `Query`, and `Add files` on non-root pages while keeping `/` brand-only; `frontend-next/components/site-header.test.tsx` now covers both header modes.
+- Risks / open questions: On narrow viewports the nav intentionally wraps below the brand block, so any future mobile redesign should preserve all four destinations rather than hiding one.
+- Next agent: If the header gets redesigned again, keep the root-vs-workspace split explicit because the splash page and the app pages intentionally have different top-bar behavior.
+
+### 2026-05-31 - Restricted Query Details Tightened
+
+- Context: The query UI still exposed detailed answer content and fallback metadata inside `More information` even when the backend signaled that all relevant company sources were restricted for the selected demo account.
+- Actions: Traced the issue through the frontend answer panel and backend access tests, added a red regression test for the fully restricted case, updated the query details rendering to switch into an access-only mode when there are restricted sources but no accessible sources, and reran frontend verification.
+- Changes made: `frontend-next/components/query-answer-panel.tsx` now hides detailed answer text, owner/source/update metadata, graph trace, and gap-routing content when the response is fully restricted; `frontend-next/components/query-answer-panel.test.tsx` now covers that case explicitly.
+- Risks / open questions: Partial-access responses still show allowed sources and details, which matches the backend contract because only blocked sources are omitted there.
+- Next agent: If the backend contract later adds an explicit boolean for `fully_restricted`, prefer that over inferring the state from `restricted_source_count > 0` plus an empty `sources` list.
+
 ### 2026-05-31 - Welcome Role Counts Clarified
 
 - Context: The welcome catalog already counted documents per team, but the label needed to read more explicitly in the UI.

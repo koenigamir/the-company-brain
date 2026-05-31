@@ -96,3 +96,47 @@ test("QueryAnswerPanel surfaces access restrictions and viewer context", () => {
   assert.match(markup, /Restricted sources/);
   assert.match(markup, />2</);
 });
+
+test("QueryAnswerPanel hides content details when all relevant sources are restricted", () => {
+  const markup = renderToStaticMarkup(
+    <QueryAnswerPanel
+      answer={{
+        ...answer,
+        short_answer: "No accessible company answer was found.",
+        detailed_answer: "Hidden confidential details should not render.",
+        sources: [],
+        last_updated_dates: [],
+        graph: {
+          used_graph: true,
+          entities_detected: ["Confidential tax workflow"],
+          entities_expanded: ["Restricted filing"],
+        },
+        access_notice:
+          "Relevant company information exists but is restricted for this demo account.",
+        restricted_source_count: 1,
+        viewer_account: {
+          id: "intern-general",
+          label: "Intern",
+          department_role: null,
+          clearance: "intern",
+          global_access: false,
+        },
+      }}
+      isCreatingTicket={false}
+      onCreateTicket={() => {}}
+      onToggleMore={() => {}}
+      question="What is covered?"
+      showMore
+      ticketCreated={false}
+    />,
+  );
+
+  assert.match(markup, /Relevant company information exists but is restricted/);
+  assert.match(markup, /Viewer account/);
+  assert.match(markup, /Intern/);
+  assert.doesNotMatch(markup, /Hidden confidential details should not render/);
+  assert.doesNotMatch(markup, /Knowledge graph trace/);
+  assert.doesNotMatch(markup, /<dt>Owner<\/dt>/);
+  assert.doesNotMatch(markup, /<dt>Sources<\/dt>/);
+  assert.doesNotMatch(markup, /<dt>Updated<\/dt>/);
+});
