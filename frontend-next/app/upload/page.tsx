@@ -6,6 +6,8 @@ import { FormEvent, useEffect, useState } from "react";
 
 import {
   ROLE_CATALOG,
+  formatClearanceLabel,
+  getDocumentVisibilitySummary,
   getRoleCatalogEntry,
 } from "../../lib/companyBrainPresentation";
 import type {
@@ -35,6 +37,8 @@ const acceptedFileTypes = [
 export default function UploadPage() {
   const [file, setFile] = useState<File | null>(null);
   const [roleOwner, setRoleOwner] = useState(roleOptions[0]);
+  const [visibilityRoles, setVisibilityRoles] = useState<string[]>([]);
+  const [minClearance, setMinClearance] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<CompanyBrainIngestResult | null>(null);
   const [isUploading, setIsUploading] = useState(false);
@@ -89,6 +93,12 @@ export default function UploadPage() {
       if (roleOwner !== roleOptions[0]) {
         formData.append("role_owner", roleOwner);
       }
+      visibilityRoles.forEach((visibilityRole) => {
+        formData.append("visibility_roles", visibilityRole);
+      });
+      if (minClearance) {
+        formData.append("min_clearance", minClearance);
+      }
 
       const response = await fetch("/api/company-brain/ingest", {
         method: "POST",
@@ -109,6 +119,29 @@ export default function UploadPage() {
 
   const selectedRoleDetails =
     roleOwner !== automaticRoleOption ? getRoleCatalogEntry(roleOwner) : null;
+  const visibilityRoleOptions = availableRoles.filter(
+    (option) => option !== automaticRoleOption,
+  );
+  const visibilitySummary =
+    visibilityRoles.length === 0
+      ? "Backend default"
+      : visibilityRoles.includes("ALL")
+        ? "All roles"
+        : visibilityRoles.join(", ");
+
+  function toggleVisibilityRole(role: string) {
+    setVisibilityRoles((current) => {
+      if (role === "ALL") {
+        return current.includes("ALL") ? [] : ["ALL"];
+      }
+
+      const next = current.filter((entry) => entry !== "ALL");
+      if (next.includes(role)) {
+        return next.filter((entry) => entry !== role);
+      }
+      return [...next, role];
+    });
+  }
 
   return (
     <main className="pageShell">
@@ -180,6 +213,76 @@ export default function UploadPage() {
               )}
             </div>
 
+            <div className="selectionHintCard">
+              <h3>Access controls</h3>
+              <p>
+                Keep the backend default access model, publish to all roles, or
+                limit visibility to specific teams with a minimum clearance.
+              </p>
+
+              <div className="chipToggleRow">
+                <button
+                  className={`ghostChip${visibilityRoles.length === 0 ? " active" : ""}`}
+                  onClick={() => setVisibilityRoles([])}
+                  type="button"
+                >
+                  Backend default
+                </button>
+                <button
+                  className={`ghostChip${visibilityRoles.includes("ALL") ? " active" : ""}`}
+                  onClick={() => toggleVisibilityRole("ALL")}
+                  type="button"
+                >
+                  All roles
+                </button>
+              </div>
+
+              <div className="checkChipGrid">
+                {visibilityRoleOptions.map((option) => (
+                  <button
+                    className={`checkChip${
+                      visibilityRoles.includes(option) ? " active" : ""
+                    }`}
+                    key={option}
+                    onClick={() => toggleVisibilityRole(option)}
+                    type="button"
+                  >
+                    {option}
+                  </button>
+                ))}
+              </div>
+
+              <label className="fieldLabel" htmlFor="minClearance">
+                Minimum clearance
+              </label>
+              <select
+                className="fieldInput"
+                id="minClearance"
+                onChange={(event) => setMinClearance(event.target.value)}
+                value={minClearance}
+              >
+                <option value="">Backend default</option>
+                <option value="intern">Intern</option>
+                <option value="standard">Standard</option>
+                <option value="senior">Senior</option>
+              </select>
+
+              <dl className="detailGrid compactDetailGrid">
+                <div className="detailTile">
+                  <dt>Visibility</dt>
+                  <dd>{visibilitySummary}</dd>
+                </div>
+                <div className="detailTile">
+                  <dt>Clearance</dt>
+                  <dd>{formatClearanceLabel(minClearance)}</dd>
+                </div>
+                <div className="detailTile">
+                  <dt>Catalog source</dt>
+                  <dd>{rolesBackend || "Fallback static catalog"}</dd>
+                </div>
+              </dl>
+            </div>
+
             <div className="actionRow">
               <button
                 className="primaryButton"
@@ -246,6 +349,14 @@ export default function UploadPage() {
                 <div className="detailTile">
                   <dt>Role reason</dt>
                   <dd>{result.role_reason || "No explicit routing reason returned."}</dd>
+                </div>
+                <div className="detailTile">
+                  <dt>Visibility</dt>
+                  <dd>{getDocumentVisibilitySummary(result)}</dd>
+                </div>
+                <div className="detailTile">
+                  <dt>Minimum clearance</dt>
+                  <dd>{formatClearanceLabel(result.min_clearance)}</dd>
                 </div>
                 <div className="detailTile">
                   <dt>Entities</dt>

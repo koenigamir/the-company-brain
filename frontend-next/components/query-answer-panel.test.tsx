@@ -64,3 +64,35 @@ test("QueryAnswerPanel reveals the full answer trail when expanded", () => {
   assert.match(markup, /Knowledge graph trace/);
   assert.match(markup, /Need follow-up with the owning team/);
 });
+
+test("QueryAnswerPanel surfaces access restrictions and viewer context", () => {
+  const markup = renderToStaticMarkup(
+    <QueryAnswerPanel
+      answer={{
+        ...answer,
+        access_notice:
+          "Some relevant sources were hidden because the selected viewer does not have access.",
+        restricted_source_count: 2,
+        viewer_account: {
+          id: "standard-employee",
+          label: "Standard employee",
+          department_role: "Regulatory Services",
+          clearance: "standard",
+          global_access: false,
+        },
+      }}
+      isCreatingTicket={false}
+      onCreateTicket={() => {}}
+      onToggleMore={() => {}}
+      question="What is covered?"
+      showMore
+      ticketCreated={false}
+    />,
+  );
+
+  assert.match(markup, /Some relevant sources were hidden/);
+  assert.match(markup, /Viewer account/);
+  assert.match(markup, /Standard employee/);
+  assert.match(markup, /Restricted sources/);
+  assert.match(markup, />2</);
+});

@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
+import type { CompanyBrainDocument } from "../types/companyBrain";
 import {
   buildGapTicketRequest,
   describeAnswerMode,
@@ -26,6 +27,37 @@ test("describeAnswerMode reports graph expansion when graph context was used", (
       detail: "Cross-document context was added from connected knowledge.",
     },
   );
+});
+
+test("document access helpers summarize visibility scope and clearance", async () => {
+  const presentationExports = (await import("./companyBrainPresentation")) as Record<
+    string,
+    unknown
+  >;
+  const getDocumentVisibilitySummary = presentationExports.getDocumentVisibilitySummary as
+    | ((document: CompanyBrainDocument) => string)
+    | undefined;
+  const formatClearanceLabel = presentationExports.formatClearanceLabel as
+    | ((clearance: string | undefined) => string)
+    | undefined;
+
+  assert.equal(typeof getDocumentVisibilitySummary, "function");
+  assert.equal(typeof formatClearanceLabel, "function");
+  assert.equal(
+    getDocumentVisibilitySummary?.({
+      source_file: "governance.pdf",
+      visibility_roles: ["ALL"],
+    }),
+    "All roles",
+  );
+  assert.equal(
+    getDocumentVisibilitySummary?.({
+      source_file: "tax.pdf",
+      visibility_roles: ["Tax Team", "Regulatory Services"],
+    }),
+    "Tax Team, Regulatory Services",
+  );
+  assert.equal(formatClearanceLabel?.("senior"), "Senior clearance");
 });
 
 test("describeAnswerMode falls back to vector mode when no graph expansion happened", () => {

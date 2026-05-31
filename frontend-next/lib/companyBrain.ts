@@ -1,5 +1,6 @@
 import type {
   CompanyBrainAnswer,
+  DemoAccountsResponse,
   CompanyBrainIngestResult,
   DocumentsResponse,
   GapTicketRequest,
@@ -38,13 +39,18 @@ async function fetchWithTimeout(
 export async function queryCompanyBrain(
   question: string,
   history: Array<Record<string, string>> = [],
+  viewerAccountId?: string,
 ): Promise<CompanyBrainAnswer> {
   const response = await fetchWithTimeout(`${backendBaseUrl()}/query`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ question, history }),
+    body: JSON.stringify({
+      question,
+      history,
+      ...(viewerAccountId ? { viewer_account_id: viewerAccountId } : {}),
+    }),
   });
 
   if (!response.ok) {
@@ -58,7 +64,11 @@ export async function queryCompanyBrain(
 export async function queryCompanyBrainWithPayload(
   payload: QueryRequest,
 ): Promise<CompanyBrainAnswer> {
-  return queryCompanyBrain(payload.question, payload.history || []);
+  return queryCompanyBrain(
+    payload.question,
+    payload.history || [],
+    payload.viewer_account_id,
+  );
 }
 
 export async function getCompanyBrainHealth(): Promise<HealthResponse> {
@@ -101,6 +111,19 @@ export async function getCompanyBrainRoles(): Promise<RolesResponse> {
   }
 
   return (await response.json()) as RolesResponse;
+}
+
+export async function getCompanyBrainDemoAccounts(): Promise<DemoAccountsResponse> {
+  const response = await fetchWithTimeout(`${backendBaseUrl()}/demo-accounts`, {
+    method: "GET",
+  });
+
+  if (!response.ok) {
+    const detail = await response.text();
+    throw new Error(detail || `Backend returned ${response.status}.`);
+  }
+
+  return (await response.json()) as DemoAccountsResponse;
 }
 
 export async function getCompanyBrainDocuments(): Promise<DocumentsResponse> {

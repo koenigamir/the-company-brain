@@ -212,4 +212,10 @@ The backend contract changed after the original frontend handoff:
 - Upload ingest now accepts optional access metadata.
 - The long-answer field is cleaner for frontend display and no longer emits table/LaTeX-heavy formatting.
 
-The currently checked-in frontend code does **not** consume all of those additions yet. Read [FRONTEND_AGENT_HANDOFF_2026-05-31.md](/private/tmp/the-company-brain-push-2/frontend-next/FRONTEND_AGENT_HANDOFF_2026-05-31.md) before making frontend changes.
+The checked-in frontend now consumes those additions through the local Next proxy routes:
+
+- Query loads backend-seeded demo accounts, sends `viewer_account_id`, and shows access notices plus restricted-source metadata.
+- Welcome shows live role counts per team together with document visibility and clearance metadata from `/documents`.
+- Upload exposes optional `visibility_roles` and `min_clearance` controls and reflects the returned access metadata after ingest.
+
+Read [FRONTEND_AGENT_HANDOFF_2026-05-31.md](/private/tmp/the-company-brain-push-2/frontend-next/FRONTEND_AGENT_HANDOFF_2026-05-31.md) for the rollout history and backend contract details.

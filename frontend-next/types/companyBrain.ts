@@ -6,6 +6,16 @@ export type GraphDebug = {
   used_graph?: boolean;
 };
 
+export type ClearanceLevel = "intern" | "standard" | "senior" | string;
+
+export type DemoAccount = {
+  id: string;
+  label: string;
+  department_role: string | null;
+  clearance: ClearanceLevel;
+  global_access: boolean;
+};
+
 export type GapRouting = {
   routed_to?: string;
   routed_roles?: string[];
@@ -36,6 +46,9 @@ export type CompanyBrainAnswer = {
   last_updated_dates?: string[];
   graph?: GraphDebug;
   gap_routing?: GapRouting;
+  viewer_account?: DemoAccount;
+  access_notice?: string | null;
+  restricted_source_count?: number;
 };
 
 export type HealthResponse = {
@@ -56,6 +69,11 @@ export type RolesResponse = {
   backend: "local" | "supabase" | string;
 };
 
+export type DemoAccountsResponse = {
+  accounts: DemoAccount[];
+  backend: "local" | "supabase" | string;
+};
+
 export type CompanyBrainDocument = {
   id?: string;
   source_file?: string;
@@ -70,6 +88,8 @@ export type CompanyBrainDocument = {
   chunks?: number;
   modality?: string;
   status?: string;
+  visibility_roles?: string[];
+  min_clearance?: ClearanceLevel;
   [key: string]: unknown;
 };
 
@@ -94,6 +114,7 @@ export type GapTicketResponse = {
 export type QueryRequest = {
   question: string;
   history?: Array<Record<string, string>>;
+  viewer_account_id?: string;
 };
 
 export type CompanyBrainIngestResult = {
@@ -112,5 +133,7 @@ export type CompanyBrainIngestResult = {
   updated_at?: string;
   last_updated?: string;
   message?: string;
+  visibility_roles?: string[];
+  min_clearance?: ClearanceLevel;
   [key: string]: unknown;
 };

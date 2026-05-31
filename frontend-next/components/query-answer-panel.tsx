@@ -2,6 +2,7 @@ import React from "react";
 
 import {
   describeAnswerMode,
+  formatClearanceLabel,
   formatMetadataList,
   getConfidenceTone,
   getGapSignalLines,
@@ -42,8 +43,16 @@ export function QueryAnswerPanel({
       answer.gap_routing ||
       answer.sources?.length ||
       answer.last_updated_dates?.length ||
-      answer.role_owner,
+      answer.role_owner ||
+      answer.viewer_account ||
+      typeof answer.restricted_source_count === "number",
   );
+  const viewerAccount = answer.viewer_account;
+  const accessMode = viewerAccount?.global_access
+    ? "Global access"
+    : viewerAccount?.department_role
+      ? `Role-based access for ${viewerAccount.department_role}`
+      : "Clearance-only access";
 
   return (
     <article aria-label={`Answer for ${question}`} className="answerStack">
@@ -67,6 +76,13 @@ export function QueryAnswerPanel({
       <div className="summaryCard">
         <p className="plainAnswerText">{summary}</p>
       </div>
+
+      {answer.access_notice ? (
+        <div className="feedbackCard warningCard">
+          <strong>Access notice</strong>
+          <p>{answer.access_notice}</p>
+        </div>
+      ) : null}
 
       {hasMoreInformation ? (
         <button
@@ -93,12 +109,28 @@ export function QueryAnswerPanel({
               <dd>{getPrimaryOwner(answer)}</dd>
             </div>
             <div className="detailTile">
+              <dt>Viewer account</dt>
+              <dd>{viewerAccount?.label || "Standard Employee"}</dd>
+            </div>
+            <div className="detailTile">
+              <dt>Restricted sources</dt>
+              <dd>{answer.restricted_source_count ?? 0}</dd>
+            </div>
+            <div className="detailTile">
               <dt>Sources</dt>
               <dd>{formatMetadataList(answer.sources, "No cited sources")}</dd>
             </div>
             <div className="detailTile">
               <dt>Updated</dt>
               <dd>{formatMetadataList(answer.last_updated_dates, "Unknown")}</dd>
+            </div>
+            <div className="detailTile">
+              <dt>Clearance</dt>
+              <dd>{formatClearanceLabel(viewerAccount?.clearance)}</dd>
+            </div>
+            <div className="detailTile">
+              <dt>Access scope</dt>
+              <dd>{accessMode}</dd>
             </div>
           </dl>
 

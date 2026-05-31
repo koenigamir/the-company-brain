@@ -29,6 +29,22 @@ Use this structure for new entries:
 
 ## Current Log
 
+### 2026-05-31 - Welcome Role Counts Clarified
+
+- Context: The welcome catalog already counted documents per team, but the label needed to read more explicitly in the UI.
+- Actions: Added a regression check for the role-count wording, changed the catalog badge text from generic `documents` to `indexed documents`, and reran the frontend test suite.
+- Changes made: `frontend-next/app/welcome/page.tsx` now renders `N indexed document(s)` on each role card; `frontend-next/components/brand-mark.test.tsx` now checks for that wording.
+- Risks / open questions: Counts still depend on `/documents` being reachable; if the backend is unavailable, the UI will correctly show zero indexed documents.
+- Next agent: Keep the welcome catalog count wording aligned with the backend document registry semantics if this card is redesigned again.
+
+### 2026-05-31 - Frontend Roles And Access Parity
+
+- Context: The frontend needed to fully consume the new backend role/access contract, including demo accounts, viewer-scoped query access, document visibility metadata, and upload access controls.
+- Actions: Re-read the frontend/backend handoff docs, added red tests for viewer account forwarding and access rendering, implemented the missing proxy/helper/type updates, wired the new role/access UI into Welcome, Query, and Upload, updated the frontend README, and verified with tests, typecheck, build, plus a local browser check on `http://127.0.0.1:3100`.
+- Changes made: Added the `demo-accounts` Next proxy route and frontend fetch helper; query now loads backend-seeded demo accounts, sends `viewer_account_id`, and renders `access_notice`, `restricted_source_count`, and viewer clearance/access scope; upload now supports optional `visibility_roles` and `min_clearance` controls and shows returned access metadata; welcome now shows document counts per role card plus a compact document access section with visibility and clearance labels; added regression tests in `frontend-next/lib/companyBrain.test.ts`, `frontend-next/lib/companyBrainPresentation.test.ts`, and `frontend-next/components/query-answer-panel.test.tsx`.
+- Risks / open questions: Static verification is clean, but the configured backend URL `http://3.76.28.239:8000` was unreachable from this environment during the final browser/health check, so the live Welcome snapshot fell back to empty counts until the backend becomes reachable again.
+- Next agent: If you need live end-to-end confirmation, bring the backend back up or point `COMPANY_BRAIN_API_URL` at a reachable instance, then re-check `/welcome`, `/query`, and `/upload` against real role/document data.
+
 ### 2026-05-31 - Welcome Catalog Reduced And Cleaned
 
 - Context: The welcome page still had a visually messy live snapshot area plus too much secondary structure around roles.

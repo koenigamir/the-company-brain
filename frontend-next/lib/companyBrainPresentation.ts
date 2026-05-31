@@ -122,6 +122,15 @@ export function formatMetadataList(
   return values.join(", ");
 }
 
+export function formatClearanceLabel(clearance: string | undefined): string {
+  const normalized = (clearance || "").trim().toLowerCase();
+  if (!normalized) {
+    return "Backend default";
+  }
+
+  return `${normalized.charAt(0).toUpperCase()}${normalized.slice(1)} clearance`;
+}
+
 export function getGapSignalLines(
   gap?: Pick<GapRouting, "signals"> | null,
 ): string[] {
@@ -216,6 +225,20 @@ export function getDocumentUpdated(document: CompanyBrainDocument): string {
   return (
     document.updated_at || document.last_updated || document.uploaded_at || "Unknown"
   );
+}
+
+export function getDocumentVisibilitySummary(
+  document: CompanyBrainDocument,
+): string {
+  if (document.visibility_roles?.includes("ALL")) {
+    return "All roles";
+  }
+
+  if (document.visibility_roles?.length) {
+    return document.visibility_roles.join(", ");
+  }
+
+  return "Backend default";
 }
 
 export function buildGapTicketRequest(

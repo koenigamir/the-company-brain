@@ -72,6 +72,7 @@ test("Welcome page keeps only the catalog overview without workspace overview or
   const markup = renderToStaticMarkup(<WelcomePage />);
 
   assert.match(markup, /Catalog Overview/);
+  assert.match(markup, /0 indexed documents/);
   assert.doesNotMatch(markup, /Workspace overview/);
   assert.doesNotMatch(markup, /Choose a role lens/);
   assert.doesNotMatch(markup, /All roles/);

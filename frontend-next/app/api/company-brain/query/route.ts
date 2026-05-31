@@ -9,6 +9,7 @@ export async function POST(request: Request) {
     const body = (await request.json()) as {
       question?: string;
       history?: Array<Record<string, string>>;
+      viewer_account_id?: string;
     };
     const question = body.question?.trim();
     if (!question) {
@@ -21,6 +22,7 @@ export async function POST(request: Request) {
     const answer = await queryCompanyBrainWithPayload({
       question,
       history: body.history || [],
+      viewer_account_id: body.viewer_account_id,
     });
     return NextResponse.json(answer);
   } catch (error) {

@@ -998,6 +998,11 @@ h4 {
   background: rgba(255, 244, 224, 0.72);
 }
 
+.warningCard {
+  border-color: rgba(138, 90, 0, 0.18);
+  background: rgba(255, 244, 224, 0.82);
+}
+
 .insightGrid {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
@@ -1142,6 +1147,49 @@ h4 {
   background:
     linear-gradient(180deg, rgba(255, 248, 250, 0.92), rgba(255, 255, 255, 0.76)),
     linear-gradient(135deg, rgba(215, 25, 45, 0.08), transparent 60%);
+}
+
+.compactInfoCard {
+  gap: 0.95rem;
+}
+
+.chipToggleRow,
+.checkChipGrid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.7rem;
+}
+
+.checkChipGrid {
+  margin-bottom: 0.2rem;
+}
+
+.checkChip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.85rem;
+  padding: 0 1rem;
+  border: 1px solid rgba(215, 25, 45, 0.14);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.76);
+  color: var(--ink);
+  cursor: pointer;
+  transition:
+    transform 160ms ease,
+    box-shadow 160ms ease,
+    background 160ms ease,
+    color 160ms ease;
+}
+
+.checkChip:hover {
+  transform: translateY(-1px);
+}
+
+.checkChip.active {
+  background: linear-gradient(135deg, var(--red), var(--red-deep));
+  color: #fff;
+  box-shadow: 0 16px 28px rgba(143, 16, 36, 0.16);
 }
 
 .uploadDropzone {
