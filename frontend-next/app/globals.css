@@ -1279,6 +1279,62 @@ h4 {
   line-height: 1.45;
 }
 
+.ownerSignalGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.55rem;
+  margin: 0;
+}
+
+.ownerSignalGrid div {
+  min-width: 0;
+  padding: 0.68rem 0.72rem;
+  border: 1px solid rgba(66, 30, 36, 0.08);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.64);
+}
+
+.ownerSignalGrid dt,
+.ownerRecentFiles span {
+  color: var(--muted);
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.ownerSignalGrid dd {
+  margin: 0.2rem 0 0;
+  overflow-wrap: anywhere;
+  color: var(--ink);
+  font-size: 0.82rem;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.ownerRecentFiles {
+  display: grid;
+  gap: 0.35rem;
+  padding-top: 0.1rem;
+}
+
+.ownerRecentFiles ul {
+  display: grid;
+  gap: 0.22rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ownerRecentFiles li,
+.ownerRecentFiles p {
+  margin: 0;
+  overflow-wrap: anywhere;
+  color: var(--muted);
+  font-size: 0.84rem;
+  line-height: 1.35;
+}
+
 .roleCardHeader,
 .documentCardHeader {
   display: flex;
@@ -1360,6 +1416,152 @@ h4 {
   font-size: 0.9rem;
   font-weight: 700;
   line-height: 1.35;
+}
+
+.documentAccessList {
+  display: grid;
+  gap: 0.45rem;
+  margin-top: 1rem;
+}
+
+.documentAccessListLabel {
+  margin-top: 1rem;
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.documentAccessHeader,
+.documentAccessRow {
+  display: grid;
+  grid-template-columns: minmax(16rem, 1.5fr) minmax(8rem, 0.8fr) minmax(11rem, 1fr) minmax(7rem, 0.6fr);
+  gap: 0.85rem;
+  align-items: center;
+}
+
+.documentAccessHeader {
+  padding: 0 0.75rem;
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.documentAccessRow {
+  padding: 0.85rem 0.95rem;
+  border: 1px solid rgba(255, 255, 255, 0.62);
+  border-radius: 22px;
+  background: rgba(255, 253, 252, 0.84);
+  box-shadow: 0 14px 32px rgba(61, 28, 35, 0.08);
+}
+
+.documentAccessRow > span {
+  overflow-wrap: anywhere;
+  color: var(--muted);
+  font-size: 0.86rem;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.documentAccessName {
+  display: grid;
+  gap: 0.25rem;
+  min-width: 0;
+}
+
+.documentAccessName strong {
+  overflow-wrap: anywhere;
+  font-size: 0.96rem;
+  line-height: 1.2;
+}
+
+.documentAccessName span {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.uploadFlow {
+  gap: 1rem;
+}
+
+.uploadStep {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.uploadStepHeader {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.uploadStepHeader span {
+  color: var(--ink);
+  font-weight: 800;
+}
+
+.uploadStepHeader small,
+.uploadInlineHint,
+.uploadSummaryLine,
+.uploadNote p {
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.uploadInlineHint {
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.advancedAccessPanel {
+  border: 1px solid rgba(66, 30, 36, 0.08);
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.56);
+}
+
+.advancedAccessPanel summary {
+  cursor: pointer;
+  padding: 0.95rem 1rem;
+  color: var(--ink);
+  font-weight: 800;
+}
+
+.advancedAccessBody {
+  display: grid;
+  gap: 0.9rem;
+  padding: 0 1rem 1rem;
+}
+
+.uploadSummaryLine {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+  font-size: 0.88rem;
+}
+
+.uploadSummaryLine span {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.25rem;
+  padding: 0 0.8rem;
+  border: 1px solid rgba(66, 30, 36, 0.08);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.72);
+}
+
+.uploadNote {
+  display: grid;
+  gap: 0.35rem;
+  margin-top: 1rem;
+  padding: 1rem;
+  border: 1px solid rgba(66, 30, 36, 0.08);
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.56);
 }
 
 .selectionHintCard {
@@ -1467,6 +1669,9 @@ h4 {
   .documentGrid,
   .documentListCompact,
   .documentFactGrid,
+  .documentAccessHeader,
+  .documentAccessRow,
+  .ownerSignalGrid,
   .detailGrid,
   .insightGrid,
   .infoStrip,

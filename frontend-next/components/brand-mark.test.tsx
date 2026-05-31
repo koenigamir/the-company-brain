@@ -66,6 +66,12 @@ test("Upload page removes the long explanatory intro copy", () => {
   const markup = renderToStaticMarkup(<UploadPage />);
 
   assert.match(markup, /Add new knowledge/);
+  assert.match(markup, /1. Select file/);
+  assert.match(markup, /2. Ownership/);
+  assert.match(markup, /Advanced access/);
+  assert.match(markup, /What happens next/);
+  assert.doesNotMatch(markup, /Best-fit content/);
+  assert.doesNotMatch(markup, /Current role catalog/);
   assert.doesNotMatch(
     markup,
     /Upload reference documents so the backend can extract text, create chunks/,
@@ -81,8 +87,12 @@ test("Welcome page keeps only the catalog overview without workspace overview or
   assert.match(markup, /Role catalog/);
   assert.match(markup, /Source owners/);
   assert.match(markup, /Documents are grouped by owner so teams can see what they maintain/);
+  assert.match(markup, /Recent files/);
+  assert.match(markup, /Access mix/);
+  assert.match(markup, /Newest update/);
   assert.match(markup, /Access-Ready Documents/);
   assert.match(markup, /Recent indexed files with their owner and access level/);
+  assert.match(markup, /Document access list/);
   assert.match(markup, /0 indexed documents/);
   assert.doesNotMatch(markup, /Live workspace snapshot/);
   assert.doesNotMatch(markup, /Workspace overview/);

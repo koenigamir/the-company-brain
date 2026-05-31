@@ -8,6 +8,7 @@ import {
   ROLE_CATALOG,
   countDocumentsForRole,
   formatClearanceLabel,
+  getAccessMixSummary,
   getDocumentDisplayName,
   getDocumentOwners,
   getDocumentRoleList,
@@ -159,7 +160,13 @@ export default function WelcomePage() {
         <div className="roleCatalogGrid cleanCatalogGrid">
           {knownRoles.map((role) => {
             const entry = getRoleCatalogEntry(role);
+            const roleDocuments = state.documents
+              .filter((document) => getDocumentRoleList(document).includes(role))
+              .sort((left, right) =>
+                getDocumentUpdated(right).localeCompare(getDocumentUpdated(left)),
+              );
             const documentCount = countDocumentsForRole(state.documents, role);
+            const recentDocuments = roleDocuments.slice(0, 2);
 
             return (
               <article className="roleCard cleanRoleCard ownerRoleCard" key={role}>
@@ -170,12 +177,37 @@ export default function WelcomePage() {
                   </span>
                 </div>
                 <p className="roleDescription">{entry.description}</p>
-                <div className="tagRow compactTagRow">
-                  {entry.tags.slice(0, 3).map((tag) => (
-                    <span className="tagChip" key={tag}>
-                      {tag}
-                    </span>
-                  ))}
+                <dl className="ownerSignalGrid">
+                  <div>
+                    <dt>Coverage tags</dt>
+                    <dd>{entry.tags.slice(0, 3).join(", ") || "Unclassified"}</dd>
+                  </div>
+                  <div>
+                    <dt>Access mix</dt>
+                    <dd>{getAccessMixSummary(roleDocuments)}</dd>
+                  </div>
+                  <div>
+                    <dt>Newest update</dt>
+                    <dd>
+                      {roleDocuments[0]
+                        ? getDocumentUpdatedLabel(roleDocuments[0])
+                        : "No indexed files yet"}
+                    </dd>
+                  </div>
+                </dl>
+                <div className="ownerRecentFiles">
+                  <span>Recent files</span>
+                  {recentDocuments.length ? (
+                    <ul>
+                      {recentDocuments.map((document) => (
+                        <li key={getDocumentSource(document)}>
+                          {getDocumentDisplayName(document)}
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p>No indexed files yet.</p>
+                  )}
                 </div>
               </article>
             );
@@ -187,41 +219,33 @@ export default function WelcomePage() {
         <div className="sectionHeading">
           <h2>Access-Ready Documents</h2>
           <p className="supportingCopy">
-            Recent indexed files with their owner and access level, pulled from
-            the live backend document registry.
+            Recent indexed files with their owner and access level.
           </p>
         </div>
+        <p className="documentAccessListLabel">Document access list</p>
 
         {latestDocuments.length ? (
-          <div className="documentListCompact">
+          <div className="documentAccessList" aria-label="Document access list">
+            <div className="documentAccessHeader">
+              <span>File</span>
+              <span>Owner</span>
+              <span>Access</span>
+              <span>Updated</span>
+            </div>
             {latestDocuments.map((document) => (
-              <article className="compactDocumentCard" key={getDocumentSource(document)}>
-                <div className="documentCardHeader">
-                  <h3 title={getDocumentSource(document)}>
+              <article className="documentAccessRow" key={getDocumentSource(document)}>
+                <div className="documentAccessName">
+                  <strong title={getDocumentSource(document)}>
                     {getDocumentDisplayName(document)}
-                  </h3>
-                  <span className="documentModeBadge">
-                    {getDocumentTypeLabel(document)}
-                  </span>
+                  </strong>
+                  <span>{getDocumentTypeLabel(document)}</span>
                 </div>
-                <dl className="documentFactGrid">
-                  <div>
-                    <dt>Owner</dt>
-                    <dd>{getDocumentOwners(document)}</dd>
-                  </div>
-                  <div>
-                    <dt>Visibility</dt>
-                    <dd>{getDocumentVisibilitySummary(document)}</dd>
-                  </div>
-                  <div>
-                    <dt>Clearance</dt>
-                    <dd>{formatClearanceLabel(document.min_clearance)}</dd>
-                  </div>
-                  <div>
-                    <dt>Updated</dt>
-                    <dd>{getDocumentUpdatedLabel(document)}</dd>
-                  </div>
-                </dl>
+                <span>{getDocumentOwners(document)}</span>
+                <span>
+                  {getDocumentVisibilitySummary(document)} ·{" "}
+                  {formatClearanceLabel(document.min_clearance)}
+                </span>
+                <span>{getDocumentUpdatedLabel(document)}</span>
               </article>
             ))}
           </div>

@@ -29,6 +29,14 @@ Use this structure for new entries:
 
 ## Current Log
 
+### 2026-05-31 - Option 1 Frontend Usability Pass
+
+- Context: User approved the compact ownership-dashboard direction for making `Source owners`, `Access-Ready Documents`, and `Add files` more useful and less cluttered.
+- Actions: Added regression coverage for the new owner metadata, compact document access list, and simplified upload flow; refactored the frontend-only Welcome and Upload pages; verified tests, typecheck, and production build.
+- Changes made: `frontend-next/app/welcome/page.tsx` now shows owner cards with coverage tags, access mix, newest update, and recent files; access-ready documents now render as a compact access list; `frontend-next/app/upload/page.tsx` now uses a two-step upload flow with collapsed advanced access and one short follow-up note; `frontend-next/lib/companyBrainPresentation.ts` now exposes `getAccessMixSummary`.
+- Risks / open questions: The in-app browser route was unavailable during the final visual check attempt, so this pass relies on render tests, typecheck, and build evidence.
+- Next agent: If more visual polish is requested, start from the new compact owner dashboard and document list rather than reintroducing large repeated cards.
+
 ### 2026-05-31 - Welcome Catalogue UI Follow-Up
 
 - Context: User reported the welcome page repeated workspace snapshot information and that the catalogue/access-ready document UI still needed to be more user-friendly.

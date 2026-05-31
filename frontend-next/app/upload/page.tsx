@@ -152,135 +152,108 @@ export default function UploadPage() {
 
       <section className="toolLayout">
         <div className="toolCard uploadCard">
-          <form className="stackForm" onSubmit={submitUpload}>
-            <label className="fieldLabel" htmlFor="file">
-              Document
-            </label>
-            <label className="uploadDropzone" htmlFor="file">
-              <input
-                accept={acceptedFileTypes.join(",")}
-                className="uploadInput"
-                id="file"
-                onChange={(event) => setFile(event.target.files?.[0] ?? null)}
-                type="file"
-              />
-              <span className="uploadTitle">
-                {file ? file.name : "Choose a file to ingest"}
-              </span>
-              <span className="uploadHint">
-                Supported formats: {acceptedFileTypes.join(", ")}
-              </span>
-            </label>
-
-            <label className="fieldLabel" htmlFor="roleOwner">
-              Assign owner
-            </label>
-            <select
-              className="fieldInput"
-              id="roleOwner"
-              onChange={(event) => setRoleOwner(event.target.value)}
-              value={roleOwner}
-            >
-              {availableRoles.map((option) => (
-                <option key={option} value={option}>
-                  {option}
-                </option>
-              ))}
-            </select>
-
-            <div className="selectionHintCard">
-              {selectedRoleDetails ? (
-                <>
-                  <h3>{selectedRoleDetails.name}</h3>
-                  <p>{selectedRoleDetails.description}</p>
-                  <div className="tagRow">
-                    {selectedRoleDetails.tags.map((tag) => (
-                      <span className="tagChip" key={tag}>
-                        {tag}
-                      </span>
-                    ))}
-                  </div>
-                </>
-              ) : (
-                <>
-                  <h3>Automatic role assignment</h3>
-                  <p>
-                    Automatic assignment uses the shared SIX role catalog and can
-                    attach multiple owning roles when a document clearly spans more
-                    than one domain.
-                  </p>
-                </>
-              )}
+          <form className="stackForm uploadFlow" onSubmit={submitUpload}>
+            <div className="uploadStep">
+              <div className="uploadStepHeader">
+                <span>1. Select file</span>
+                <small>{acceptedFileTypes.slice(0, 5).join(", ")} and media</small>
+              </div>
+              <label className="uploadDropzone" htmlFor="file">
+                <input
+                  accept={acceptedFileTypes.join(",")}
+                  className="uploadInput"
+                  id="file"
+                  onChange={(event) => setFile(event.target.files?.[0] ?? null)}
+                  type="file"
+                />
+                <span className="uploadTitle">
+                  {file ? file.name : "Choose a file to ingest"}
+                </span>
+                <span className="uploadHint">
+                  The backend extracts content, chunks it, and adds it to retrieval.
+                </span>
+              </label>
             </div>
 
-            <div className="selectionHintCard">
-              <h3>Access controls</h3>
-              <p>
-                Keep the backend default access model, publish to all roles, or
-                limit visibility to specific teams with a minimum clearance.
-              </p>
-
-              <div className="chipToggleRow">
-                <button
-                  className={`ghostChip${visibilityRoles.length === 0 ? " active" : ""}`}
-                  onClick={() => setVisibilityRoles([])}
-                  type="button"
-                >
-                  Backend default
-                </button>
-                <button
-                  className={`ghostChip${visibilityRoles.includes("ALL") ? " active" : ""}`}
-                  onClick={() => toggleVisibilityRole("ALL")}
-                  type="button"
-                >
-                  All roles
-                </button>
+            <div className="uploadStep">
+              <div className="uploadStepHeader">
+                <span>2. Ownership</span>
+                <small>{rolesBackend || "Fallback static catalog"}</small>
               </div>
-
-              <div className="checkChipGrid">
-                {visibilityRoleOptions.map((option) => (
-                  <button
-                    className={`checkChip${
-                      visibilityRoles.includes(option) ? " active" : ""
-                    }`}
-                    key={option}
-                    onClick={() => toggleVisibilityRole(option)}
-                    type="button"
-                  >
-                    {option}
-                  </button>
-                ))}
-              </div>
-
-              <label className="fieldLabel" htmlFor="minClearance">
-                Minimum clearance
-              </label>
               <select
                 className="fieldInput"
-                id="minClearance"
-                onChange={(event) => setMinClearance(event.target.value)}
-                value={minClearance}
+                id="roleOwner"
+                onChange={(event) => setRoleOwner(event.target.value)}
+                value={roleOwner}
               >
-                <option value="">Backend default</option>
-                <option value="intern">Intern</option>
-                <option value="standard">Standard</option>
-                <option value="senior">Senior</option>
+                {availableRoles.map((option) => (
+                  <option key={option} value={option}>
+                    {option}
+                  </option>
+                ))}
               </select>
+              <p className="uploadInlineHint">
+                {selectedRoleDetails
+                  ? selectedRoleDetails.description
+                  : "Auto-detect lets the backend infer one or more source owners from the content."}
+              </p>
+            </div>
 
-              <dl className="detailGrid compactDetailGrid">
-                <div className="detailTile">
-                  <dt>Visibility</dt>
-                  <dd>{visibilitySummary}</dd>
+            <details className="advancedAccessPanel">
+              <summary>Advanced access</summary>
+              <div className="advancedAccessBody">
+                <div className="chipToggleRow">
+                  <button
+                    className={`ghostChip${visibilityRoles.length === 0 ? " active" : ""}`}
+                    onClick={() => setVisibilityRoles([])}
+                    type="button"
+                  >
+                    Backend default
+                  </button>
+                  <button
+                    className={`ghostChip${visibilityRoles.includes("ALL") ? " active" : ""}`}
+                    onClick={() => toggleVisibilityRole("ALL")}
+                    type="button"
+                  >
+                    All roles
+                  </button>
                 </div>
-                <div className="detailTile">
-                  <dt>Clearance</dt>
-                  <dd>{formatClearanceLabel(minClearance)}</dd>
+
+                <div className="checkChipGrid">
+                  {visibilityRoleOptions.map((option) => (
+                    <button
+                      className={`checkChip${
+                        visibilityRoles.includes(option) ? " active" : ""
+                      }`}
+                      key={option}
+                      onClick={() => toggleVisibilityRole(option)}
+                      type="button"
+                    >
+                      {option}
+                    </button>
+                  ))}
                 </div>
-                <div className="detailTile">
-                  <dt>Catalog source</dt>
-                  <dd>{rolesBackend || "Fallback static catalog"}</dd>
-                </div>
-              </dl>
+
+                <label className="fieldLabel" htmlFor="minClearance">
+                  Minimum clearance
+                </label>
+                <select
+                  className="fieldInput"
+                  id="minClearance"
+                  onChange={(event) => setMinClearance(event.target.value)}
+                  value={minClearance}
+                >
+                  <option value="">Backend default</option>
+                  <option value="intern">Intern</option>
+                  <option value="standard">Standard</option>
+                  <option value="senior">Senior</option>
+                </select>
+              </div>
+            </details>
+
+            <div className="uploadSummaryLine">
+              <span>Visibility: {visibilitySummary}</span>
+              <span>Clearance: {formatClearanceLabel(minClearance)}</span>
             </div>
 
             <div className="actionRow">
@@ -297,30 +270,12 @@ export default function UploadPage() {
             </div>
           </form>
 
-          <div className="infoStrip">
-            <div className="infoTile">
-              <h3>What happens after upload</h3>
-              <p>
-                The backend saves the file, extracts text or media content,
-                regenerates chunks, refreshes vectors, and merges graph entities for
-                that document.
-              </p>
-            </div>
-            <div className="infoTile">
-              <h3>Best-fit content</h3>
-              <p>
-                This flow is built for documents tied to product coverage, regulatory
-                interpretation, ESG disclosures, tax workflows, and reference-data
-                operations, plus screenshots, transcripts, and short demo media.
-              </p>
-            </div>
-            <div className="infoTile">
-              <h3>Current role catalog</h3>
-              <p>
-                Roles are loaded from the backend via the local proxy route and are
-                currently served from {rolesBackend || "the fallback static list"}.
-              </p>
-            </div>
+          <div className="uploadNote">
+            <h3>What happens next</h3>
+            <p>
+              The file is saved, extracted, chunked, embedded, and connected to
+              graph entities so it can appear in answers and ownership views.
+            </p>
           </div>
 
           {error ? (

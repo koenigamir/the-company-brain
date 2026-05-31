@@ -288,6 +288,27 @@ export function getDocumentVisibilitySummary(
   return "Backend default";
 }
 
+export function getAccessMixSummary(documents: CompanyBrainDocument[]): string {
+  if (!documents.length) {
+    return "No indexed files yet";
+  }
+
+  const labels = new Set<string>();
+  documents.forEach((document) => {
+    const visibility = getDocumentVisibilitySummary(document);
+    if (visibility !== "Backend default") {
+      labels.add(visibility);
+    }
+
+    const clearance = formatClearanceLabel(document.min_clearance);
+    if (clearance !== "Backend default") {
+      labels.add(clearance);
+    }
+  });
+
+  return labels.size ? Array.from(labels).join(", ") : "Backend default";
+}
+
 export function buildGapTicketRequest(
   question: string,
   answer: CompanyBrainAnswer,

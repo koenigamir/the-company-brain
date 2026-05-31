@@ -7,6 +7,7 @@ import {
   describeAnswerMode,
   formatMetadataList,
   countDocumentsForRole,
+  getAccessMixSummary,
   getConfidenceTone,
   getDocumentRoleList,
   getDocumentOwners,
@@ -173,6 +174,13 @@ test("document display helpers make backend metadata readable", () => {
   );
   assert.equal(getDocumentTypeLabel({ source_file: "taxonomy.pdf" }), "PDF");
   assert.equal(getDocumentTypeLabel({ source_file: "template.xlsx" }), "Spreadsheet");
+  assert.equal(
+    getAccessMixSummary([
+      { source_file: "public.pdf", role_owner: "Tax Team", visibility_roles: ["ALL"] },
+      { source_file: "senior.pdf", role_owner: "Tax Team", min_clearance: "senior" },
+    ]),
+    "All roles, Senior clearance",
+  );
 });
 
 test("buildGapTicketRequest preserves the backend gap object", () => {
