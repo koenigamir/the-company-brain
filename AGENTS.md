@@ -29,6 +29,14 @@ Use this structure for new entries:
 
 ## Current Log
 
+### 2026-05-31 - Frontend Answer Trail And Owner Cards
+
+- Context: User requested a cleaner post-answer knowledge graph trace, less cluttered knowledge-gap routing, and a sleeker Source owners area on the welcome page.
+- Actions: Kept changes frontend-only in `frontend-next/`, wrote render-regression checks first, replaced text-heavy trace/routing sections with dedicated graph/routing UI, and locally verified the edited frontend.
+- Changes made: `QueryAnswerPanel` now turns graph debug paths into a compact node/edge trace with evidence chips and renders gap routing as one recommendation card with confidence, route chips, reason, signals, and CTA; Welcome Source owners now uses cleaner owner cards with document count, coverage chips, latest evidence, access mix, and update freshness instead of long descriptions and nested stat boxes.
+- Risks / open questions: In-app browser tooling was not exposed in this thread and Playwright is not installed in the frontend package, so visual runtime checking used server HTTP smoke plus render tests/build rather than screenshots.
+- Next agent: Continue keeping these UI refinements frontend-only; if visual QA is required, add or expose a browser/screenshot tool before relying on screenshot evidence.
+
 ### 2026-05-31 - Option 1 Frontend Usability Pass
 
 - Context: User approved the compact ownership-dashboard direction for making `Source owners`, `Access-Ready Documents`, and `Add files` more useful and less cluttered.

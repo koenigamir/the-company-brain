@@ -17,8 +17,9 @@ const answer: CompanyBrainAnswer = {
   graph: {
     used_graph: true,
     entities_detected: ["SFDR"],
-    entities_expanded: ["ESG"],
-    relation_paths: ["SFDR -> ESG"],
+    entities_expanded: ["ESG", "MiFID II"],
+    relation_paths: ["SFDR -> implements -> ESG", "ESG -> relates to -> MiFID II"],
+    graph_added_files: ["six-handbook-regulatory-navigator-en.pdf"],
   },
   gap_routing: {
     routed_to: "Regulatory Services",
@@ -62,7 +63,15 @@ test("QueryAnswerPanel reveals the full answer trail when expanded", () => {
   assert.match(markup, /Hide more information/);
   assert.match(markup, /Detailed answer/);
   assert.match(markup, /Knowledge graph trace/);
+  assert.match(markup, /graphTraceCanvas/);
+  assert.match(markup, /graphNode detected/);
+  assert.match(markup, /graphEdgeLabel/);
+  assert.match(markup, /Evidence added/);
+  assert.match(markup, /six-handbook-regulatory-navigator-en\.pdf/);
   assert.match(markup, /Need follow-up with the owning team/);
+  assert.match(markup, /gapRouteCard/);
+  assert.match(markup, /Route recommendation/);
+  assert.match(markup, /Medium confidence/);
 });
 
 test("QueryAnswerPanel surfaces access restrictions and viewer context", () => {

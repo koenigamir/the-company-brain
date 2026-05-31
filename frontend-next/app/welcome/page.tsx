@@ -150,14 +150,14 @@ export default function WelcomePage() {
         </div>
 
         <div className="catalogSubheading">
-          <h3>Source owners</h3>
-          <p>
-            Documents are grouped by owner so teams can see what they maintain,
-            which topics they cover, and where indexed evidence comes from.
-          </p>
+          <div>
+            <p className="eyebrow">Source owners</p>
+            <h3>Ownership at a glance</h3>
+          </div>
+          <p>Clean owner cards show responsibility, evidence volume, access, and freshness.</p>
         </div>
 
-        <div className="roleCatalogGrid cleanCatalogGrid">
+        <div className="ownerCardGrid" aria-label="Ownership at a glance">
           {knownRoles.map((role) => {
             const entry = getRoleCatalogEntry(role);
             const roleDocuments = state.documents
@@ -166,49 +166,48 @@ export default function WelcomePage() {
                 getDocumentUpdated(right).localeCompare(getDocumentUpdated(left)),
               );
             const documentCount = countDocumentsForRole(state.documents, role);
-            const recentDocuments = roleDocuments.slice(0, 2);
+            const latestDocument = roleDocuments[0];
+            const latestDocumentLabel = latestDocument
+              ? getDocumentDisplayName(latestDocument)
+              : "No indexed evidence yet";
 
             return (
-              <article className="roleCard cleanRoleCard ownerRoleCard" key={role}>
-                <div className="roleCardHeader">
-                  <h3>{entry.name}</h3>
-                  <span className="roleCountBadge">
-                    {documentCount} indexed document{documentCount === 1 ? "" : "s"}
+              <article className="ownerRoleCard" key={role}>
+                <div className="ownerCardTopline">
+                  <span className="ownerCardIndex">
+                    {String(documentCount).padStart(2, "0")}
                   </span>
+                  <span>indexed document{documentCount === 1 ? "" : "s"}</span>
                 </div>
-                <p className="roleDescription">{entry.description}</p>
-                <dl className="ownerSignalGrid">
+
+                <div className="ownerCardIdentity">
+                  <h3>{entry.name}</h3>
+                  <div className="ownerCoverageChips" aria-label="Top coverage">
+                    {entry.tags.slice(0, 3).map((tag) => (
+                      <span key={tag}>{tag}</span>
+                    ))}
+                    {!entry.tags.length ? <span>unclassified</span> : null}
+                  </div>
+                </div>
+
+                <dl className="ownerCardFacts">
                   <div>
-                    <dt>Coverage tags</dt>
-                    <dd>{entry.tags.slice(0, 3).join(", ") || "Unclassified"}</dd>
+                    <dt>Evidence</dt>
+                    <dd title={latestDocumentLabel}>{latestDocumentLabel}</dd>
                   </div>
                   <div>
                     <dt>Access mix</dt>
                     <dd>{getAccessMixSummary(roleDocuments)}</dd>
                   </div>
                   <div>
-                    <dt>Newest update</dt>
+                    <dt>Updated</dt>
                     <dd>
-                      {roleDocuments[0]
-                        ? getDocumentUpdatedLabel(roleDocuments[0])
+                      {latestDocument
+                        ? getDocumentUpdatedLabel(latestDocument)
                         : "No indexed files yet"}
                     </dd>
                   </div>
                 </dl>
-                <div className="ownerRecentFiles">
-                  <span>Recent files</span>
-                  {recentDocuments.length ? (
-                    <ul>
-                      {recentDocuments.map((document) => (
-                        <li key={getDocumentSource(document)}>
-                          {getDocumentDisplayName(document)}
-                        </li>
-                      ))}
-                    </ul>
-                  ) : (
-                    <p>No indexed files yet.</p>
-                  )}
-                </div>
               </article>
             );
           })}

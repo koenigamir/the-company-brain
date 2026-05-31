@@ -1172,6 +1172,208 @@ h4 {
   gap: 0.5rem;
 }
 
+.graphTracePanel {
+  gap: 0.9rem;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.86), rgba(255, 248, 247, 0.72)),
+    radial-gradient(circle at 40% 12%, rgba(88, 215, 255, 0.12), transparent 48%);
+}
+
+.graphTraceCanvas {
+  display: grid;
+  gap: 0.85rem;
+  padding: 1rem;
+  border: 1px solid rgba(66, 30, 36, 0.08);
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.68);
+  box-shadow: inset 0 0 0 1px rgba(88, 215, 255, 0.08);
+}
+
+.graphNodeRail {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+}
+
+.graphNode {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.35rem;
+  padding: 0.52rem 0.78rem;
+  border: 1px solid rgba(66, 30, 36, 0.08);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.86);
+  color: var(--ink);
+  font-size: 0.84rem;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.graphNode.detected {
+  border-color: rgba(228, 35, 19, 0.18);
+  background: rgba(255, 234, 231, 0.9);
+  color: var(--red-deep);
+}
+
+.graphNode.expanded {
+  border-color: rgba(88, 215, 255, 0.35);
+  background: rgba(235, 250, 255, 0.88);
+}
+
+.graphEdgeRail {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.graphEdge {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(2rem, 0.18fr) auto minmax(2rem, 0.18fr) minmax(0, 1fr);
+  gap: 0.5rem;
+  align-items: center;
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.graphEdge > span:first-child,
+.graphEdge > span:last-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.graphEdge > span:last-child {
+  text-align: right;
+}
+
+.graphEdgeLine {
+  height: 2px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, rgba(228, 35, 19, 0.3), rgba(88, 215, 255, 0.68));
+}
+
+.graphEdgeLabel {
+  padding: 0.35rem 0.55rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.9);
+  color: var(--ink);
+  font-size: 0.72rem;
+  letter-spacing: 0.02em;
+  text-transform: lowercase;
+}
+
+.graphLegend,
+.graphEvidenceChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.graphLegend span,
+.graphEvidenceChips span {
+  display: inline-flex;
+  max-width: 100%;
+  padding: 0.45rem 0.68rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.72);
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.graphEvidence {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.gapRoutingPanel {
+  gap: 0.9rem;
+  border-color: rgba(138, 90, 0, 0.12);
+  background:
+    linear-gradient(180deg, rgba(255, 250, 238, 0.86), rgba(255, 253, 248, 0.72)),
+    radial-gradient(circle at top right, rgba(228, 35, 19, 0.08), transparent 42%);
+}
+
+.gapRouteHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.gapConfidenceBadge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.35rem;
+  padding: 0.48rem 0.78rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.76);
+  color: var(--amber);
+  font-size: 0.8rem;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.gapRouteCard {
+  display: grid;
+  grid-template-columns: minmax(14rem, 0.75fr) minmax(0, 1.25fr);
+  gap: 1rem;
+  padding: 1rem;
+  border: 1px solid rgba(66, 30, 36, 0.08);
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.72);
+}
+
+.gapLabel {
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.gapRouteTeams,
+.gapSignalChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.55rem;
+}
+
+.gapRouteTeams span,
+.gapSignalChips span {
+  display: inline-flex;
+  max-width: 100%;
+  padding: 0.5rem 0.72rem;
+  border-radius: 999px;
+  background: rgba(215, 25, 45, 0.08);
+  color: var(--red-deep);
+  font-size: 0.8rem;
+  font-weight: 800;
+  line-height: 1.25;
+}
+
+.gapReason {
+  color: var(--ink);
+  font-size: 0.95rem;
+  font-weight: 650;
+  line-height: 1.55;
+}
+
+.gapSignalPanel {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.gapActionRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.85rem;
+  align-items: center;
+  padding-top: 0.1rem;
+}
+
 .inlineSuccess {
   color: var(--green);
   font-weight: 700;
@@ -1221,6 +1423,7 @@ h4 {
 }
 
 .roleCatalogGrid,
+.ownerCardGrid,
 .documentListCompact {
   display: grid;
   gap: 1rem;
@@ -1234,6 +1437,12 @@ h4 {
 .cleanCatalogGrid {
   grid-template-columns: repeat(3, minmax(0, 1fr));
   margin-top: 0.85rem;
+}
+
+.ownerCardGrid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.85rem;
+  margin-top: 0.9rem;
 }
 
 .documentListCompact {
@@ -1261,78 +1470,96 @@ h4 {
 }
 
 .ownerRoleCard {
-  min-height: 0;
-  padding: 1.05rem;
-}
-
-.ownerRoleCard .roleCardHeader {
-  align-items: center;
-}
-
-.ownerRoleCard h3 {
-  font-size: 1.02rem;
-}
-
-.roleDescription {
-  color: var(--muted);
-  font-size: 0.9rem;
-  line-height: 1.45;
-}
-
-.ownerSignalGrid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 0.55rem;
-  margin: 0;
+  gap: 0.9rem;
+  min-height: 12rem;
+  padding: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.68);
+  border-radius: 24px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.88), rgba(255, 249, 248, 0.72)),
+    radial-gradient(circle at top right, rgba(228, 35, 19, 0.08), transparent 48%);
+  box-shadow: 0 16px 36px rgba(61, 28, 35, 0.08);
 }
 
-.ownerSignalGrid div {
-  min-width: 0;
-  padding: 0.68rem 0.72rem;
-  border: 1px solid rgba(66, 30, 36, 0.08);
-  border-radius: 16px;
-  background: rgba(255, 255, 255, 0.64);
-}
-
-.ownerSignalGrid dt,
-.ownerRecentFiles span {
+.ownerCardTopline {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.7rem;
   color: var(--muted);
-  font-size: 0.7rem;
+  font-size: 0.74rem;
   font-weight: 800;
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 
-.ownerSignalGrid dd {
-  margin: 0.2rem 0 0;
-  overflow-wrap: anywhere;
-  color: var(--ink);
-  font-size: 0.82rem;
-  font-weight: 700;
-  line-height: 1.35;
+.ownerCardIndex {
+  color: var(--red-deep);
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  letter-spacing: -0.04em;
 }
 
-.ownerRecentFiles {
+.ownerCardIdentity {
   display: grid;
-  gap: 0.35rem;
+  gap: 0.65rem;
+}
+
+.ownerCardIdentity h3 {
+  font-size: 1.08rem;
+  letter-spacing: -0.04em;
+}
+
+.ownerCoverageChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.42rem;
+}
+
+.ownerCoverageChips span {
+  display: inline-flex;
+  padding: 0.38rem 0.6rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.78);
+  color: var(--muted);
+  font-size: 0.74rem;
+  font-weight: 800;
+  line-height: 1.15;
+}
+
+.ownerCardFacts {
+  display: grid;
+  gap: 0.45rem;
+  margin: 0;
   padding-top: 0.1rem;
 }
 
-.ownerRecentFiles ul {
+.ownerCardFacts div {
   display: grid;
-  gap: 0.22rem;
-  margin: 0;
-  padding: 0;
-  list-style: none;
+  grid-template-columns: minmax(5rem, 0.38fr) minmax(0, 1fr);
+  gap: 0.7rem;
+  align-items: baseline;
+  min-width: 0;
 }
 
-.ownerRecentFiles li,
-.ownerRecentFiles p {
-  margin: 0;
-  overflow-wrap: anywhere;
+.ownerCardFacts dt {
   color: var(--muted);
-  font-size: 0.84rem;
-  line-height: 1.35;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.ownerCardFacts dd {
+  margin: 0;
+  overflow: hidden;
+  color: var(--ink);
+  font-size: 0.82rem;
+  font-weight: 750;
+  line-height: 1.3;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .roleCardHeader,
@@ -1666,13 +1893,14 @@ h4 {
   .roleGrid,
   .roleCatalogGrid,
   .cleanCatalogGrid,
+  .ownerCardGrid,
   .documentGrid,
   .documentListCompact,
   .documentFactGrid,
   .documentAccessHeader,
   .documentAccessRow,
-  .ownerSignalGrid,
   .detailGrid,
+  .gapRouteCard,
   .insightGrid,
   .infoStrip,
   .heroSnapshotGrid {
@@ -1688,6 +1916,25 @@ h4 {
 
   .catalogSubheading {
     align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .graphEdge {
+    grid-template-columns: 1fr;
+    justify-items: start;
+  }
+
+  .graphEdge > span:last-child {
+    text-align: left;
+  }
+
+  .graphEdgeLine {
+    width: 2px;
+    height: 1.2rem;
+    margin-left: 0.6rem;
+  }
+
+  .gapRouteHeader {
     flex-direction: column;
   }
 }

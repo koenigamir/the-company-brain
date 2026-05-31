@@ -10,7 +10,7 @@ import {
   getRoutedRoles,
   normalizeAnswerText,
 } from "../lib/companyBrainPresentation";
-import type { CompanyBrainAnswer } from "../types/companyBrain";
+import type { CompanyBrainAnswer, GraphDebug } from "../types/companyBrain";
 
 type QueryAnswerPanelProps = {
   answer: CompanyBrainAnswer;
@@ -21,6 +21,82 @@ type QueryAnswerPanelProps = {
   isCreatingTicket: boolean;
   ticketCreated: boolean;
 };
+
+type GraphTraceNode = {
+  id: string;
+  tone: "detected" | "expanded" | "context";
+};
+
+type GraphTraceEdge = {
+  from: string;
+  label: string;
+  to: string;
+};
+
+function uniqueValues(values: Array<string | undefined>): string[] {
+  return Array.from(
+    new Set(values.map((value) => value?.trim()).filter(Boolean) as string[]),
+  );
+}
+
+function parseRelationPath(path: string): GraphTraceEdge[] {
+  const parts = path
+    .split(/\s*(?:->|→)\s*/g)
+    .map((part) => part.trim())
+    .filter(Boolean);
+
+  if (parts.length < 2) {
+    return [];
+  }
+
+  if (parts.length === 2) {
+    return [{ from: parts[0], label: "connected to", to: parts[1] }];
+  }
+
+  const edges: GraphTraceEdge[] = [];
+  for (let index = 0; index < parts.length - 2; index += 2) {
+    edges.push({
+      from: parts[index],
+      label: parts[index + 1],
+      to: parts[index + 2],
+    });
+  }
+  return edges;
+}
+
+function buildGraphTrace(graph: GraphDebug | undefined): {
+  nodes: GraphTraceNode[];
+  edges: GraphTraceEdge[];
+} {
+  if (!graph) {
+    return { nodes: [], edges: [] };
+  }
+
+  const detected = uniqueValues(graph.entities_detected || []);
+  const expanded = uniqueValues(graph.entities_expanded || []);
+  const edges = (graph.relation_paths || []).flatMap(parseRelationPath);
+
+  if (!edges.length && detected.length && expanded.length) {
+    edges.push({ from: detected[0], label: "expanded to", to: expanded[0] });
+  }
+
+  const nodeNames = uniqueValues([
+    ...detected,
+    ...expanded,
+    ...edges.flatMap((edge) => [edge.from, edge.to]),
+  ]);
+
+  const nodes = nodeNames.map((id) => ({
+    id,
+    tone: detected.includes(id)
+      ? "detected"
+      : expanded.includes(id)
+        ? "expanded"
+        : "context",
+  })) satisfies GraphTraceNode[];
+
+  return { nodes, edges };
+}
 
 export function QueryAnswerPanel({
   answer,
@@ -56,6 +132,7 @@ export function QueryAnswerPanel({
       ? `Role-based access for ${viewerAccount.department_role}`
       : "Clearance-only access";
   const topChips = isFullyRestricted ? ["Restricted access"] : routedRoles;
+  const graphTrace = buildGraphTrace(answer.graph);
 
   return (
     <article aria-label={`Answer for ${question}`} className="answerStack">
@@ -144,88 +221,104 @@ export function QueryAnswerPanel({
           </dl>
 
           {answer.graph && !isFullyRestricted ? (
-            <section className="insightPanel">
+            <section className="insightPanel graphTracePanel">
               <h3>Knowledge graph trace</h3>
-              <div className="insightGrid">
-                <div>
-                  <h4>Entities detected</h4>
-                  <p>
-                    {formatMetadataList(
-                      answer.graph.entities_detected,
-                      "No known entities were detected in this question.",
-                    )}
-                  </p>
+              <div className="graphTraceCanvas" aria-label="Knowledge graph">
+                <div className="graphNodeRail">
+                  {graphTrace.nodes.length ? (
+                    graphTrace.nodes.map((node) => (
+                      <span className={`graphNode ${node.tone}`} key={node.id}>
+                        {node.id}
+                      </span>
+                    ))
+                  ) : (
+                    <span className="graphNode context">No graph entities returned</span>
+                  )}
                 </div>
-                <div>
-                  <h4>Graph expansion</h4>
-                  <p>
-                    {formatMetadataList(
-                      answer.graph.entities_expanded,
-                      "No extra graph entities were added.",
-                    )}
-                  </p>
-                </div>
+
+                {graphTrace.edges.length ? (
+                  <div className="graphEdgeRail">
+                    {graphTrace.edges.map((edge) => (
+                      <div
+                        className="graphEdge"
+                        key={`${edge.from}-${edge.label}-${edge.to}`}
+                      >
+                        <span>{edge.from}</span>
+                        <span className="graphEdgeLine" aria-hidden="true" />
+                        <span className="graphEdgeLabel">{edge.label}</span>
+                        <span className="graphEdgeLine" aria-hidden="true" />
+                        <span>{edge.to}</span>
+                      </div>
+                    ))}
+                  </div>
+                ) : null}
               </div>
 
-              {answer.graph.relation_paths?.length ? (
-                <div className="listPanel">
-                  <h4>Relation paths</h4>
-                  <ul>
-                    {answer.graph.relation_paths.map((path) => (
-                      <li key={path}>{path}</li>
-                    ))}
-                  </ul>
-                </div>
-              ) : null}
+              <div className="graphLegend">
+                <span>
+                  Detected:{" "}
+                  {formatMetadataList(
+                    answer.graph.entities_detected,
+                    "No known entities",
+                  )}
+                </span>
+                <span>
+                  Expanded:{" "}
+                  {formatMetadataList(answer.graph.entities_expanded, "No additions")}
+                </span>
+              </div>
 
               {answer.graph.graph_added_files?.length ? (
-                <div className="listPanel">
-                  <h4>Additional files pulled in</h4>
-                  <ul>
+                <div className="graphEvidence">
+                  <h4>Evidence added</h4>
+                  <div className="graphEvidenceChips">
                     {answer.graph.graph_added_files.map((path) => (
-                      <li key={path}>{path}</li>
+                      <span key={path}>{path}</span>
                     ))}
-                  </ul>
+                  </div>
                 </div>
               ) : null}
             </section>
           ) : null}
 
           {answer.gap_routing && !isFullyRestricted ? (
-            <section className="insightPanel warningPanel">
-              <h3>Knowledge gap routing</h3>
-              <p className="supportingCopy">
-                The current corpus could not fully verify this answer, so the most
-                likely owning team is suggested below.
-              </p>
+            <section className="insightPanel gapRoutingPanel">
+              <div className="gapRouteHeader">
+                <div>
+                  <p className="eyebrow">Knowledge gap routing</p>
+                  <h3>Route recommendation</h3>
+                </div>
+                <span className="gapConfidenceBadge">
+                  {answer.gap_routing.routing_confidence || "Low"} confidence
+                </span>
+              </div>
 
-              <dl className="detailGrid">
-                <div className="detailTile">
-                  <dt>Route to</dt>
-                  <dd>{routedRoles.join(", ")}</dd>
+              <div className="gapRouteCard">
+                <div>
+                  <span className="gapLabel">Route to</span>
+                  <div className="gapRouteTeams">
+                    {routedRoles.map((role) => (
+                      <span key={role}>{role}</span>
+                    ))}
+                  </div>
                 </div>
-                <div className="detailTile">
-                  <dt>Reason</dt>
-                  <dd>{answer.gap_routing.reason || "No routing reason returned."}</dd>
-                </div>
-                <div className="detailTile">
-                  <dt>Routing confidence</dt>
-                  <dd>{answer.gap_routing.routing_confidence || "Low"}</dd>
-                </div>
-              </dl>
+                <p className="gapReason">
+                  {answer.gap_routing.reason || "No routing reason returned."}
+                </p>
+              </div>
 
               {gapSignalLines.length ? (
-                <div className="listPanel">
+                <div className="gapSignalPanel">
                   <h4>Routing signals</h4>
-                  <ul>
+                  <div className="gapSignalChips">
                     {gapSignalLines.map((line) => (
-                      <li key={line}>{line}</li>
+                      <span key={line}>{line}</span>
                     ))}
-                  </ul>
+                  </div>
                 </div>
               ) : null}
 
-              <div className="actionRow">
+              <div className="gapActionRow">
                 <button
                   className="primaryButton"
                   disabled={isCreatingTicket}
