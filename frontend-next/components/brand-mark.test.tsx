@@ -86,16 +86,27 @@ test("Upload page removes the long explanatory intro copy", () => {
 test("Welcome page keeps only the catalog overview without workspace overview or role selector", () => {
   const markup = renderToStaticMarkup(<WelcomePage />);
 
-  assert.match(markup, /Catalog Overview/);
-  assert.match(markup, /Ownership graph/);
-  assert.match(markup, /Backend document registry/);
-  assert.match(markup, /Topic coverage/);
-  assert.match(markup, /Role catalog/);
+  assert.match(markup, /Company Brain helps teams find trusted answers/);
+  assert.match(markup, /Ask questions in plain language/);
+  assert.match(markup, /See who owns each answer area/);
+  assert.match(markup, /Improve knowledge when gaps appear/);
+  assert.match(markup, /How knowledge flows/);
+  assert.match(markup, /Company knowledge/);
+  assert.match(markup, /Answer topics/);
+  assert.match(markup, /Owning teams/);
   assert.match(markup, /Source owners/);
   assert.match(markup, /catalogGraph/);
   assert.match(markup, /catalogOwnerNode/);
   assert.match(markup, /catalogTopicPill/);
-  assert.match(markup, /indexed documents/);
+  assert.match(markup, /knowledge sources/);
+  assert.doesNotMatch(markup, /Catalog Overview/);
+  assert.doesNotMatch(markup, /Ownership graph/);
+  assert.doesNotMatch(markup, /Backend/);
+  assert.doesNotMatch(markup, /backend/);
+  assert.doesNotMatch(markup, /frontend/);
+  assert.doesNotMatch(markup, /registry/);
+  assert.doesNotMatch(markup, /indexed/);
+  assert.doesNotMatch(markup, /Role catalog/);
   assert.doesNotMatch(markup, /Access-Ready Documents/);
   assert.doesNotMatch(markup, /Document access list/);
   assert.doesNotMatch(markup, /Ownership at a glance/);

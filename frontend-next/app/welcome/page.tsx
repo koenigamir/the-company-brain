@@ -107,7 +107,7 @@ export default function WelcomePage() {
       latestDocument,
       latestDocumentLabel: latestDocument
         ? getDocumentDisplayName(latestDocument)
-        : "No indexed evidence",
+        : "No source added yet",
       latestUpdatedLabel: latestDocument
         ? getDocumentUpdatedLabel(latestDocument)
         : "No update yet",
@@ -122,21 +122,39 @@ export default function WelcomePage() {
       })),
     )
     .slice(0, 10);
+  const sourceLabel = `${state.documents.length} knowledge source${
+    state.documents.length === 1 ? "" : "s"
+  }`;
 
   return (
     <main className="pageShell landingShell">
       <section className="landingHero welcomeHeroSimple">
         <div className="heroCopy">
           <p className="eyebrow">Welcome</p>
-          <h1>Grounded answers, visible ownership, faster follow-up.</h1>
+          <h1>Company Brain helps teams find trusted answers.</h1>
           <p className="lede">
-            This frontend connects the Company Brain backend to a calmer workspace
-            for regulatory, tax, ESG, and reference-data questions.
+            Ask questions in plain language, see where the answer belongs, and
+            send missing knowledge to the right owner when something needs follow-up.
           </p>
+
+          <div className="welcomeValueGrid" aria-label="What Company Brain does">
+            <article>
+              <strong>Ask questions in plain language</strong>
+              <span>Get answers from company knowledge without searching file by file.</span>
+            </article>
+            <article>
+              <strong>See who owns each answer area</strong>
+              <span>Understand which team maintains the topic and source material.</span>
+            </article>
+            <article>
+              <strong>Improve knowledge when gaps appear</strong>
+              <span>Route unclear or missing answers to the right subject matter team.</span>
+            </article>
+          </div>
 
           <div className="actionRow">
             <Link className="primaryButton" href="/query">
-              Open query workspace
+              Start asking
             </Link>
             <Link className="secondaryLink" href="/upload">
               Add new knowledge
@@ -147,35 +165,36 @@ export default function WelcomePage() {
 
       <section className="landingSection catalogSection">
         <div className="sectionHeading catalogHeading">
-          <h2>Catalog Overview</h2>
+          <h2>How knowledge flows</h2>
           <p className="supportingCopy">
-            Documents flow from the backend registry into the teams responsible
-            for maintaining and answering from them.
+            Company Brain keeps answers connected to the topics and teams that
+            maintain them, so users know both what the answer is and who can
+            improve it.
           </p>
         </div>
 
         <div className="catalogMap" aria-label="Knowledge map">
           <div className="catalogNode sourceNode">
-            <span>Backend document registry</span>
-            <strong>{state.documents.length} documents</strong>
+            <span>Company knowledge</span>
+            <strong>{sourceLabel}</strong>
           </div>
           <div className="catalogConnector" aria-hidden="true" />
           <div className="catalogNode hubNode">
-            <span>Knowledge map</span>
-            <strong>Source owners</strong>
+            <span>Answer topics</span>
+            <strong>Knowledge map</strong>
           </div>
           <div className="catalogConnector" aria-hidden="true" />
           <div className="catalogNode sourceNode">
-            <span>Role catalog</span>
+            <span>Owning teams</span>
             <strong>{knownRoles.length} teams</strong>
           </div>
         </div>
 
-        <div className="catalogGraph" aria-label="Ownership graph">
+        <div className="catalogGraph" aria-label="Knowledge flow">
           <div className="catalogGraphSource">
-            <p className="eyebrow">Ownership graph</p>
-            <strong>Backend document registry</strong>
-            <span>{state.documents.length} indexed documents</span>
+            <p className="eyebrow">Company knowledge</p>
+            <strong>Source material</strong>
+            <span>{sourceLabel}</span>
           </div>
 
           <div className="catalogGraphConnector" aria-hidden="true" />
@@ -199,7 +218,7 @@ export default function WelcomePage() {
                 <span
                   className="catalogTopicPill"
                   key={`${topic.role}-${topic.tag}`}
-                  title={`${topic.role}: ${topic.count} indexed documents`}
+                  title={`${topic.role}: ${topic.count} knowledge sources`}
                 >
                   {topic.tag}
                 </span>
@@ -212,14 +231,17 @@ export default function WelcomePage() {
           <div className="catalogOwnerCluster">
             <div className="catalogGraphHeader">
               <span>Source owners</span>
-              <strong>Role catalog</strong>
+              <strong>Owning teams</strong>
             </div>
             <div className="catalogOwnerGrid">
               {ownerSummaries.map((summary) => (
                 <article className="catalogOwnerNode" key={summary.role}>
                   <div>
                     <h3>{summary.role}</h3>
-                    <span>{summary.documentCount} indexed documents</span>
+                    <span>
+                      {summary.documentCount} knowledge source
+                      {summary.documentCount === 1 ? "" : "s"}
+                    </span>
                   </div>
                   <p title={summary.latestDocumentLabel}>
                     {summary.latestDocumentLabel}
@@ -227,7 +249,11 @@ export default function WelcomePage() {
                   <dl>
                     <div>
                       <dt>Access</dt>
-                      <dd>{getAccessMixSummary(summary.documents)}</dd>
+                      <dd>
+                        {summary.documents.length
+                          ? getAccessMixSummary(summary.documents)
+                          : "No sources yet"}
+                      </dd>
                     </div>
                     <div>
                       <dt>Updated</dt>
