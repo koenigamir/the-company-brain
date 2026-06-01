@@ -109,12 +109,12 @@ export function SixLogo({ className }: SixLogoProps) {
 export function IntelligenceLogo({ className }: IntelligenceLogoProps) {
   return (
     <div className={`intelligenceLogo${className ? ` ${className}` : ""}`}>
-      <span className="srOnly">intelligence</span>
+      <span className="srOnly">7ntelligence</span>
       <span className="intelligenceLogoGlyph">
         <RobotSevenGlyph />
       </span>
       <span aria-hidden="true" className="intelligenceLogoWord">
-        intelligence
+        ntelligence
       </span>
     </div>
   );

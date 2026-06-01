@@ -12,11 +12,13 @@ import { BrandMark, IntelligenceLogo, SixLogo } from "./brand-mark";
 test("BrandMark renders the intelligence wordmark and a robot mark", () => {
   const markup = renderToStaticMarkup(<BrandMark />);
 
-  assert.match(markup, /intelligence/);
+  assert.match(markup, /7ntelligence/);
   assert.match(markup, /<svg/);
   assert.match(markup, /seven-mark/);
   assert.match(markup, /robot-head/);
   assert.match(markup, /#E42313/);
+  assert.match(markup, /class="intelligenceLogoWord">ntelligence/);
+  assert.doesNotMatch(markup, /class="intelligenceLogoWord">intelligence/);
 });
 
 test("SixLogo renders the provided sponsor image asset", () => {
@@ -31,8 +33,9 @@ test("SixLogo renders the provided sponsor image asset", () => {
 test("IntelligenceLogo exposes the full intelligence lockup", () => {
   const markup = renderToStaticMarkup(<IntelligenceLogo />);
 
-  assert.match(markup, /intelligence/);
+  assert.match(markup, /7ntelligence/);
   assert.match(markup, /intelligenceLogoWord/);
+  assert.doesNotMatch(markup, /class="intelligenceLogoWord">intelligence/);
 });
 
 test("Home keeps the created for lockup with the SIX logo", () => {
@@ -86,7 +89,7 @@ test("Upload page removes the long explanatory intro copy", () => {
 test("Welcome page keeps only the catalog overview without workspace overview or role selector", () => {
   const markup = renderToStaticMarkup(<WelcomePage />);
 
-  assert.match(markup, /Company Brain helps teams find trusted answers/);
+  assert.match(markup, /7ntelligence&#x27;s Company Brain helps teams find trusted answers/);
   assert.match(markup, /Ask questions in plain language/);
   assert.match(markup, /See who owns each answer area/);
   assert.match(markup, /Improve knowledge when gaps appear/);

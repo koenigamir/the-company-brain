@@ -123,14 +123,14 @@ button {
 .intelligenceLogo {
   display: inline-flex;
   align-items: flex-end;
-  gap: clamp(0.45rem, 1.3vw, 0.9rem);
+  gap: clamp(0.08rem, 0.35vw, 0.22rem);
 }
 
 .intelligenceLogoGlyph {
   display: inline-flex;
   width: clamp(2.25rem, 4vw, 3.15rem);
   flex: 0 0 auto;
-  transform: translateY(-0.04em);
+  transform: translateY(0.02em);
 }
 
 .intelligenceLogoGlyph .seven-mark {
@@ -436,7 +436,7 @@ button {
 }
 
 .welcomeHeroSimple .heroCopy {
-  max-width: 58rem;
+  max-width: 64rem;
 }
 
 .heroCopy,
@@ -753,7 +753,7 @@ h4 {
 
 .catalogGraph {
   display: grid;
-  grid-template-columns: minmax(11rem, 0.72fr) 3rem minmax(16rem, 1fr) 3rem minmax(22rem, 1.45fr);
+  grid-template-columns: minmax(10rem, 0.58fr) 2.5rem minmax(15rem, 0.78fr) 2.5rem minmax(28rem, 1.7fr);
   gap: 0.9rem;
   align-items: center;
   margin-top: 1.25rem;
@@ -847,30 +847,32 @@ h4 {
 
 .catalogOwnerNode {
   display: grid;
-  gap: 0.55rem;
+  gap: 0.48rem;
   min-width: 0;
-  padding: 0.78rem;
+  padding: 0.82rem;
   border: 1px solid rgba(66, 30, 36, 0.08);
   border-radius: 18px;
   background: rgba(255, 255, 255, 0.78);
 }
 
 .catalogOwnerNode div:first-child {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 0.75rem;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.28rem;
 }
 
 .catalogOwnerNode h3 {
-  font-size: 0.94rem;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  font-size: 0.9rem;
+  line-height: 1.08;
 }
 
 .catalogOwnerNode div:first-child span {
   color: var(--red-deep);
-  font-size: 0.74rem;
+  font-size: 0.7rem;
   font-weight: 850;
-  white-space: nowrap;
+  line-height: 1.15;
 }
 
 .catalogOwnerNode p {
@@ -885,7 +887,7 @@ h4 {
 
 .catalogOwnerNode dl {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 0.55rem;
   margin: 0;
 }
@@ -902,8 +904,9 @@ h4 {
   margin: 0.12rem 0 0;
   overflow: hidden;
   color: var(--ink);
-  font-size: 0.74rem;
+  font-size: 0.72rem;
   font-weight: 800;
+  line-height: 1.2;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -2287,9 +2290,9 @@ h4 {
   }
 
   .heroIntelligenceLogo .intelligenceLogo {
-    flex-direction: column;
-    align-items: center;
-    gap: 0.45rem;
+    flex-direction: row;
+    align-items: flex-end;
+    gap: 0.12rem;
   }
 
   .heroIntelligenceLogo .intelligenceLogoGlyph {

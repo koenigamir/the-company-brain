@@ -131,7 +131,7 @@ export default function WelcomePage() {
       <section className="landingHero welcomeHeroSimple">
         <div className="heroCopy">
           <p className="eyebrow">Welcome</p>
-          <h1>Company Brain helps teams find trusted answers.</h1>
+          <h1>7ntelligence&apos;s Company Brain helps teams find trusted answers.</h1>
           <p className="lede">
             Ask questions in plain language, see where the answer belongs, and
             send missing knowledge to the right owner when something needs follow-up.
