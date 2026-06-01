@@ -29,6 +29,14 @@ Use this structure for new entries:
 
 ## Current Log
 
+### 2026-06-01 - Frontend Chat And Catalogue Graph
+
+- Context: User requested removal of Access-Ready Documents, a less cluttered chat-like query page, and a truly different Catalogue Overview instead of more owner cards.
+- Actions: Researched relationship-map/lineage-style UI options, kept the implementation frontend-only in `frontend-next/`, added render tests for the new structure, and verified the local frontend.
+- Changes made: Removed the Access-Ready Documents section from `/welcome`; replaced Source owners cards with a graph-style catalogue view that connects backend registry, topic coverage, and source-owner nodes; rebuilt `/query` as a compact chat interface with profile controls, access chips, message thread, and bottom composer.
+- Risks / open questions: Browser screenshot tooling is still unavailable in this thread, so runtime visual verification used local HTTP smoke plus render tests/build.
+- Next agent: Preserve the catalogue graph direction unless explicitly asked to return to cards; if screenshots are required, first enable a browser/screenshot tool in this environment.
+
 ### 2026-05-31 - Frontend Answer Trail And Owner Cards
 
 - Context: User requested a cleaner post-answer knowledge graph trace, less cluttered knowledge-gap routing, and a sleeker Source owners area on the welcome page.

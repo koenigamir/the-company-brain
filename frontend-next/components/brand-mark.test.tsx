@@ -43,16 +43,21 @@ test("Home keeps the created for lockup with the SIX logo", () => {
   assert.match(markup, /six-logo\.png/);
 });
 
-test("Query page keeps only the minimal centered copy", () => {
+test("Query page renders as a compact chat interface", () => {
   const markup = renderToStaticMarkup(<QueryPage />);
 
-  assert.match(markup, /Ask the company knowledge base/);
+  assert.match(markup, /Company Brain chat/);
+  assert.match(markup, /chatThread/);
+  assert.match(markup, /assistantMessage/);
+  assert.match(markup, /chatComposer/);
+  assert.match(markup, /Send/);
   assert.match(markup, /Agent profile/);
-  assert.match(markup, /Your question/);
   assert.match(
     markup,
     /Which SIX workflow covers MiFID II product governance questions\?/,
   );
+  assert.doesNotMatch(markup, /Your question/);
+  assert.doesNotMatch(markup, /Ask the company knowledge base/);
   assert.doesNotMatch(markup, /Questions are filtered by the backend/);
   assert.doesNotMatch(markup, /Access profiles are currently served from/);
   assert.doesNotMatch(
@@ -82,19 +87,18 @@ test("Welcome page keeps only the catalog overview without workspace overview or
   const markup = renderToStaticMarkup(<WelcomePage />);
 
   assert.match(markup, /Catalog Overview/);
-  assert.match(markup, /Knowledge map/);
+  assert.match(markup, /Ownership graph/);
   assert.match(markup, /Backend document registry/);
+  assert.match(markup, /Topic coverage/);
   assert.match(markup, /Role catalog/);
   assert.match(markup, /Source owners/);
-  assert.match(markup, /Ownership at a glance/);
-  assert.match(markup, /Top coverage/);
-  assert.match(markup, /Evidence/);
-  assert.match(markup, /Access mix/);
-  assert.match(markup, /Updated/);
-  assert.match(markup, /Access-Ready Documents/);
-  assert.match(markup, /Recent indexed files with their owner and access level/);
-  assert.match(markup, /Document access list/);
+  assert.match(markup, /catalogGraph/);
+  assert.match(markup, /catalogOwnerNode/);
+  assert.match(markup, /catalogTopicPill/);
   assert.match(markup, /indexed documents/);
+  assert.doesNotMatch(markup, /Access-Ready Documents/);
+  assert.doesNotMatch(markup, /Document access list/);
+  assert.doesNotMatch(markup, /Ownership at a glance/);
   assert.doesNotMatch(markup, /Documents are grouped by owner so teams can see what they maintain/);
   assert.doesNotMatch(markup, /Role description is not yet available/);
   assert.doesNotMatch(markup, /Live workspace snapshot/);

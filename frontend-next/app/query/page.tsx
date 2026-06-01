@@ -108,101 +108,116 @@ export default function QueryPage() {
   const selectedRole = selectedAccount.department_role || "No team scope";
 
   return (
-    <main className="pageShell">
-      <section className="pageIntro minimalPageIntro">
-        <h1>Ask the company knowledge base</h1>
-      </section>
+    <main className="pageShell chatPageShell">
+      <section className="chatWorkspace">
+        <div className="chatHeader">
+          <div>
+            <p className="eyebrow">Query</p>
+            <h1>Company Brain chat</h1>
+          </div>
 
-      <section className="toolLayout minimalToolLayout">
-        <div className="toolCard queryCard minimalToolCard">
-          <form className="stackForm" onSubmit={submitQuery}>
-            <div className="agentBar" aria-label="Agent profile">
-              <div className="agentIdentity">
-                <span className="agentLabel">Agent profile</span>
-                <select
-                  className="agentSelect"
-                  id="viewerAccount"
-                  onChange={(event) => setViewerAccountId(event.target.value)}
-                  value={viewerAccountId}
-                >
-                  {demoAccounts.map((account) => (
-                    <option key={account.id} value={account.id}>
-                      {account.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
+          <div className="chatAgentControl" aria-label="Agent profile">
+            <span className="agentLabel">Agent profile</span>
+            <select
+              className="agentSelect"
+              id="viewerAccount"
+              onChange={(event) => setViewerAccountId(event.target.value)}
+              value={viewerAccountId}
+            >
+              {demoAccounts.map((account) => (
+                <option key={account.id} value={account.id}>
+                  {account.label}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
 
-              <div className="agentMeta" aria-label="Active access context">
-                <span>{selectedRole}</span>
-                <span>{formatClearanceLabel(selectedAccount.clearance)}</span>
-                <span>{selectedAccessMode}</span>
-              </div>
-            </div>
+        <div className="chatMetaRow" aria-label="Active access context">
+          <span>{selectedRole}</span>
+          <span>{formatClearanceLabel(selectedAccount.clearance)}</span>
+          <span>{selectedAccessMode}</span>
+        </div>
 
-            <label className="fieldLabel" htmlFor="question">
-              Your question
-            </label>
+        <div className="chatPanel">
+          <div className="chatThread" aria-live="polite">
+            <article className="chatMessage assistantMessage">
+              <span className="chatSpeaker">Company Brain</span>
+              <p>Ready for your next company knowledge question.</p>
+            </article>
+
+            {answer ? (
+              <article className="chatMessage userMessage">
+                <span className="chatSpeaker">You</span>
+                <p>{question}</p>
+              </article>
+            ) : null}
+
+            {error ? (
+              <article className="chatMessage assistantMessage errorMessage">
+                <span className="chatSpeaker">Query failed</span>
+                <p>{error}</p>
+              </article>
+            ) : null}
+
+            {answer ? (
+              <article className="chatMessage assistantMessage answerMessage">
+                <QueryAnswerPanel
+                  answer={answer}
+                  isCreatingTicket={isCreatingTicket}
+                  onCreateTicket={async () => {
+                    setIsCreatingTicket(true);
+                    setError(null);
+                    try {
+                      const response = await fetch("/api/company-brain/gap-ticket", {
+                        method: "POST",
+                        headers: {
+                          "Content-Type": "application/json",
+                        },
+                        body: JSON.stringify(buildGapTicketRequest(question, answer)),
+                      });
+                      const body = await response.json();
+                      if (!response.ok) {
+                        throw new Error(body.error ?? "Gap ticket failed.");
+                      }
+                      setTicketCreated(true);
+                    } catch (err) {
+                      setError(
+                        err instanceof Error ? err.message : "Gap ticket failed.",
+                      );
+                    } finally {
+                      setIsCreatingTicket(false);
+                    }
+                  }}
+                  onToggleMore={() => setShowMore((current) => !current)}
+                  question={question}
+                  showMore={showMore}
+                  ticketCreated={ticketCreated}
+                />
+              </article>
+            ) : null}
+          </div>
+
+          <form className="chatComposer" onSubmit={submitQuery}>
             <textarea
+              aria-label="Message"
               className="fieldInput fieldTextarea queryTextarea"
               id="question"
               onChange={(event) => setQuestion(event.target.value)}
-              rows={5}
+              rows={3}
               value={question}
             />
 
-            <div className="actionRow queryActionRow">
+            <div className="chatComposerActions">
               <button
                 className="primaryButton"
                 disabled={isLoading || !question.trim()}
                 type="submit"
               >
-                {isLoading ? "Synthesizing answer..." : "Ask"}
+                {isLoading ? "Thinking..." : "Send"}
               </button>
             </div>
           </form>
-
-          {error ? (
-            <div className="feedbackCard errorCard">
-              <strong>Query failed</strong>
-              <p>{error}</p>
-            </div>
-          ) : null}
-
-          {answer ? (
-            <QueryAnswerPanel
-              answer={answer}
-              isCreatingTicket={isCreatingTicket}
-              onCreateTicket={async () => {
-                setIsCreatingTicket(true);
-                setError(null);
-                try {
-                  const response = await fetch("/api/company-brain/gap-ticket", {
-                    method: "POST",
-                    headers: {
-                      "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify(buildGapTicketRequest(question, answer)),
-                  });
-                  const body = await response.json();
-                  if (!response.ok) {
-                    throw new Error(body.error ?? "Gap ticket failed.");
-                  }
-                  setTicketCreated(true);
-                } catch (err) {
-                  setError(
-                    err instanceof Error ? err.message : "Gap ticket failed.",
-                  );
-                } finally {
-                  setIsCreatingTicket(false);
-                }
-              }}
-              onToggleMore={() => setShowMore((current) => !current)}
-              question={question}
-              showMore={showMore}
-              ticketCreated={ticketCreated}
-            />
-          ) : null}
         </div>
       </section>
     </main>
